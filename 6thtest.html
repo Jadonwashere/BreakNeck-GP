@@ -1,0 +1,3432 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; overflow: hidden; background: #050505; touch-action: none; font-family: 'Segoe UI', sans-serif; }
+        #main-menu { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000;
+            /* you can keep this as a fallback, but the <img> will be primary */
+            background-image: url('red-sun-city.png');
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000; pointer-events: all; overflow: hidden;
+        }
+        #main-menu::before {
+            content: '';
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 40%;
+            background: 
+                linear-gradient(90deg, transparent 0%, #0ff 10%, transparent 15%, #f0f 20%, transparent 25%, #0ff 30%, transparent 35%, #f0f 45%, transparent 50%, #0ff 60%, transparent 65%, #f0f 75%, transparent 80%, #0ff 90%, transparent 100%);
+            background-size: 100% 100%;
+            opacity: 0.22; /* was 0.3 – let more of the photo show through */
+            clip-path: polygon(0% 100%, 5% 85%, 10% 70%, 15% 80%, 20% 65%, 25% 75%, 30% 60%, 35% 70%, 40% 55%, 45% 65%, 50% 50%, 55% 60%, 60% 45%, 65% 55%, 70% 40%, 75% 50%, 80% 35%, 85% 45%, 90% 30%, 95% 40%, 100% 25%, 100% 100%);
+        }
+        #main-menu::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 35%;
+            background: linear-gradient(90deg, #0a0a1a 0%, #1a003a 25%, #0a0a2a 50%, #1a003a 75%, #0a0a1a 100%);
+            opacity: 0.45; /* was 0.6 */
+            clip-path: polygon(0% 100%, 8% 75%, 16% 85%, 24% 70%, 32% 80%, 40% 65%, 48% 75%, 56% 60%, 64% 70%, 72% 55%, 80% 65%, 88% 50%, 96% 60%, 100% 40%, 100% 100%);
+        }
+        #menu-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+        #menu-title { 
+            font-size: 80px; font-weight: 900; color: #0ff; 
+            text-shadow: 0 0 30px #0ff, 0 0 60px #f0f, 0 0 90px #0ff;
+            margin-bottom: 40px; letter-spacing: 3px;
+            position: relative; z-index: 10;
+        }
+        #play-button {
+            font-size: 32px; font-weight: bold; padding: 20px 60px;
+            background: linear-gradient(90deg, #0ff, #f0f); color: #000;
+            border: none; border-radius: 15px; cursor: pointer;
+            text-shadow: 0 0 10px #fff; box-shadow: 0 0 30px #0ff, 0 0 30px #f0f;
+            transition: all 0.3s ease;
+            position: relative; z-index: 10;
+        }
+        #play-button:hover { transform: scale(1.1); box-shadow: 0 0 50px #0ff, 0 0 50px #f0f; }
+        #play-button:active { transform: scale(0.95); }
+
+        /* NEW: settings button on main menu */
+        #settings-button {
+            margin-top: 16px;
+            font-size: 16px;
+            padding: 10px 28px;
+            background: rgba(0,0,0,0.6);
+            color: #0ff;
+            border: 1px solid rgba(0,255,255,0.6);
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+
+        #game-container { display: none; }
+        #ui { position: absolute; top: 10%; width: 100%; text-align: center; color: #fff; pointer-events: none; z-index: 30; }
+        #speed-box { font-size: 64px; font-weight: 900; color: #000; text-shadow: 0 0 16px #00aaff; margin-bottom: 0; }
+        /* #speed-unit removed */
+        #position-display { 
+            position: absolute; top: 20px; right: 20px; margin-top: 0;
+            font-size: 24px; font-weight: bold; text-shadow: 0 0 10px #0ff;
+        }
+        #countdown-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 120px; font-weight: 900; color: #0ff; text-shadow: 0 0 50px #0ff, 0 0 100px #f0f; z-index: 40; pointer-events: none; }
+        #lap-display { 
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 24px; font-weight: bold; color: #000; text-shadow: 0 0 12px #00aaff; z-index: 30;
+        }
+        #race-time {
+            display:none; position:absolute; top:50px; right:20px;
+            color:#000; font-size:16px; font-weight:bold; text-shadow:0 0 10px #00aaff; z-index:31;
+        }
+        #finish-menu {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5,5,10,0.95);
+            display: none; z-index: 300;
+            align-items: center; justify-content: center; flex-direction: column;
+            pointer-events: all; overflow-y: auto;
+        }
+        #finish-menu h1 { color: #0ff; font-size: 48px; margin: 20px 0; text-shadow: 0 0 20px #0ff; }
+        #results-container { max-height: 60vh; overflow-y: auto; width: 90%; max-width: 600px; margin: 20px 0; }
+        .result-entry { 
+            background: rgba(0,255,255,0.1); border: 1px solid #0ff; padding: 12px; margin: 8px 0;
+            border-radius: 8px; color: #fff; text-align: left; font-size: 14px;
+        }
+        .result-entry.player { background: rgba(0,255,255,0.3); border-color: #f0f; }
+        .btn { 
+            width: 85px; height: 85px; background: rgba(255, 255, 255, 0.05); 
+            border: 2px solid rgba(0, 255, 255, 0.5); border-radius: 20px; color: #0ff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold; user-select: none; backdrop-filter: blur(5px);
+        }
+        .btn:active { transform: scale(0.9); background: rgba(0, 255, 255, 0.2); }
+        .btn-dir { font-size: 32px; border-radius: 50%; }
+        .btn-gas { width: 110px; height: 110px; border-color: #0f0; color: #0f0; font-size: 20px; }
+        .btn-boost { border-color: #f0f; color: #f0f; }
+        .btn-brake { width: 85px; height: 60px; border-color: #f44; color: #f44; }
+        #crash-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,0,0,0.8); display: none; flex-direction: column;
+            justify-content: center; align-items: center; color: white; z-index: 100;
+        }
+        #cam-zone { position: absolute; top: 0; left: 0; width: 100%; height: 60%; z-index: 10; }
+        #health-bar-container { position: absolute; top: 20px; left: 20px; width: 200px; height: 20px; background: rgba(0,0,0,0.5); border: 2px solid #0ff; border-radius: 5px; z-index: 30; }
+        #health-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #0f0, #0ff); border-radius: 3px; }
+        /* Pause menu overlay */
+        #pause-menu {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5,5,10,0.85);
+            display: none;
+            z-index: 200;
+            align-items: center; justify-content: center; flex-direction: column;
+            pointer-events: all;
+        }
+        .pause-btn {
+            background: linear-gradient(90deg,#0ff,#f0f);
+            color: #000; border: none; padding: 16px 28px; margin: 8px; font-weight: 800;
+            border-radius: 12px; cursor: pointer; box-shadow: 0 0 30px rgba(0,255,255,0.08);
+        }
+        .pause-btn.secondary { background: rgba(255,255,255,0.06); color: #0ff; border: 2px solid rgba(0,255,255,0.12); }
+
+        /* TRACK SELECT MENU */
+        #track-menu {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top, #1a0033 0%, #050510 55%, #020208 100%);
+            display: none;
+            z-index: 900;
+            align-items: center;
+            justify-content: flex-start;   /* was center */
+            flex-direction: column;
+            pointer-events: all;
+            overflow-y: auto;              /* NEW: allow vertical scroll */
+            padding-top: 32px;             /* NEW: space from top */
+            padding-bottom: 32px;          /* NEW: bottom padding */
+        }
+        #track-menu h1 {
+            color: #0ff; font-size: 42px; margin-bottom: 24px;
+            text-shadow: 0 0 20px #0ff, 0 0 40px #f0f;
+        }
+        .track-row {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;
+            max-width: 900px;
+        }
+        .track-card {
+            width: 200px; padding: 14px;
+            background: rgba(5,10,30,0.9);
+            border-radius: 12px;
+            border: 2px solid rgba(0,255,255,0.3);
+            box-shadow: 0 0 18px rgba(0,255,255,0.15);
+            text-align: left; color: #ccc; font-size: 13px;
+        }
+        .track-card h2 {
+            margin: 0 0 6px 0;
+            font-size: 18px; color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+        }
+        .track-card small { color: #aaa; font-size: 11px; }
+        .track-btn {
+            margin-top: 10px; width: 100%; padding: 8px 0;
+            border: none; border-radius: 10px;
+            background: linear-gradient(90deg,#0ff,#f0f);
+            color: #000; font-weight: 700; cursor: pointer;
+        }
+        .track-btn:hover { filter: brightness(1.1); }
+
+        .track-thumb {
+            display:block;
+            width:160px; height:90px;
+            border-radius:8px;
+            background:#030313;
+            border:1px solid rgba(0,255,255,0.25);
+            margin-bottom:8px;
+        }
+
+        /* NEW: difficulty labels */
+        .track-difficulty {
+            margin-top: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .track-difficulty.easy   { color: #4cff4c; }
+        .track-difficulty.normal { color: #00e5ff; }
+        .track-difficulty.hard   { color: #ff6060; }
+    </style>
+</head>
+<body>
+    <div id="main-menu">
+        <!-- NEW: actual image element; ensure red-sun-city.png sits next to this HTML file -->
+        <img id="menu-bg" src="red-sun-city.png" alt="">
+        <div id="menu-title">BreakNeck GP</div>
+        <button id="play-button">PLAY</button>
+        <!-- NEW: settings button to toggle mobile controls -->
+        <button id="settings-button">MOBILE CONTROLS: OFF</button>
+    </div>
+
+    <!-- TRACK SELECT OVERLAY (shown after PLAY) -->
+    <div id="track-menu">
+        <h1>SELECT TRACK</h1>
+        <div class="track-row">
+            <div class="track-card">
+                <canvas class="track-thumb" width="160" height="90" data-track="0"></canvas>
+                <h2>Neon Summit</h2>
+                <small>High-speed hill climb with sweeping corners.</small>
+                <div class="track-difficulty normal">NORMAL</div>
+                <button id="track-0" class="track-btn">RACE</button>
+            </div>
+            <div class="track-card">
+                <canvas class="track-thumb" width="160" height="90" data-track="1"></canvas>
+                <h2>Downtown Loop</h2>
+                <small>Tight city oval wrapped in skyscrapers.</small>
+                <div class="track-difficulty easy">EASY</div>
+                <button id="track-1" class="track-btn">RACE</button>
+            </div>
+            <div class="track-card">
+                <canvas class="track-thumb" width="160" height="90" data-track="2"></canvas>
+                <h2>Skyline Sprint</h2>
+                <small>Long straights and elevated skyline sections.</small>
+                <div class="track-difficulty hard">HARD</div>
+                <button id="track-2" class="track-btn">RACE</button>
+            </div>
+            <div class="track-card">
+                <canvas class="track-thumb" width="160" height="90" data-track="3"></canvas>
+                <h2>Quantum Cross</h2>
+                <small>Criss‑crossing high-speed chicanes.</small>
+                <div class="track-difficulty normal">NORMAL</div>
+                <button id="track-3" class="track-btn">RACE</button>
+            </div>
+            <div class="track-card">
+                <canvas class="track-thumb" width="160" height="90" data-track="4"></canvas>
+                <h2>Solar Infinity</h2>
+                <small>Yellow figure‑8 with glowing solar pylons.</small>
+                <div class="track-difficulty hard">HARD</div>
+                <button id="track-4" class="track-btn">RACE</button>
+            </div>
+            <div class="track-card">
+                <canvas class="track-thumb" width="160" height="90" data-track="5"></canvas>
+                <h2>Obsidian Bobsled</h2>
+                <small>Black, hyper‑hilly bobsled run with wild drops.</small>
+                <div class="track-difficulty hard">HARD</div>
+                <button id="track-5" class="track-btn">RACE</button>
+            </div>
+            <!-- removed Ember Circuit (track-6) and Ivory Speedway (track-7) cards -->
+        </div>
+        <div style="margin-top: 24px;">
+            <button id="track-back" class="pause-btn secondary">BACK</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="pause-menu" aria-hidden="true" style="display: none;">
+            <h1 style="color:#0ff; font-size:48px; margin:0 0 18px 0;">PAUSED</h1>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <button id="pause-resume" class="pause-btn">RESUME</button>
+                <button id="pause-restart" class="pause-btn secondary">RESTART</button>
+                <button id="pause-quit" class="pause-btn secondary">QUIT TO MENU</button>
+            </div>
+        </div>
+        <div id="cam-zone"></div>
+        <div id="crash-overlay"><h1 style="font-size: 50px; margin:0;">CRASHED</h1><p id="timer" style="font-size: 24px;">3</p></div>
+        <div id="ui"><div id="speed-box">0</div></div>
+        <div id="position-display">1 / 60</div>
+        <div id="health-bar-container">
+            <div id="health-bar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #0f0, #0ff); border-radius: 3px;"></div>
+        </div>
+        <div id="countdown-display" style="display:none;">5</div>
+        <div id="lap-display" style="display:none;">LAP 1/2</div>
+        <div id="race-time" style="display:none; position:absolute; top:50px; right:20px; color:#0ff; font-size:16px; font-weight:bold; text-shadow:0 0 10px #00aaff; z-index:31;">
+            TIME 0.00s
+        </div>
+        <div id="finish-menu">
+            <h1>RACE FINISHED!</h1>
+            <div style="color: #0ff; font-size: 18px; margin-bottom: 10px;" id="player-time"></div>
+            <div id="results-container"></div>
+            <div id="finish-buttons">
+                <button class="pause-btn" id="race-again">RACE AGAIN</button>
+                <button class="pause-btn secondary" id="finish-menu-btn">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // @ts-nocheck
+        /* eslint-disable */
+
+        // global handle so we can fully stop/dispose the previous game before starting a new one
+        let currentStopGame = null;
+        // NEW: global flag for mobile controls
+        let mobileControlsEnabled = false;
+
+        // Menu interaction
+        document.getElementById('play-button').addEventListener('click', () => {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('track-menu').style.display = 'flex';
+        });
+
+        // NEW: settings button toggles mobile controls
+        const settingsButton = document.getElementById('settings-button');
+        if (settingsButton) {
+            settingsButton.addEventListener('click', () => {
+                mobileControlsEnabled = !mobileControlsEnabled;
+                settingsButton.textContent = mobileControlsEnabled
+                    ? 'MOBILE CONTROLS: ON'
+                    : 'MOBILE CONTROLS: OFF';
+            });
+        }
+
+        // NEW: track menu BACK button -> return to main menu
+        const trackBackBtn = document.getElementById('track-back');
+        if (trackBackBtn) {
+            trackBackBtn.addEventListener('click', () => {
+                document.getElementById('track-menu').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'flex';
+            });
+        }
+
+        // Track selection buttons -> start game with chosen track
+        ['track-0','track-1','track-2','track-3','track-4','track-5'].forEach((id, idx) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                document.getElementById('track-menu').style.display = 'none';
+                document.getElementById('game-container').style.display = 'block';
+                // stop previous game instance (if any) before starting a new one
+                if (currentStopGame) {
+                    currentStopGame();
+                    currentStopGame = null;
+                }
+                startGame(idx);
+            });
+        });
+
+        // NEW: 2D layouts for each track, matching the real 3D TRACK_DEFS (x,z only)
+        const TRACK_MINI_LAYOUTS = [
+            // 0: Neon Summit
+            [
+                { x:   0,  z:    0 },
+                { x:   0,  z: -800 },
+                { x: 400,  z: -1500 },
+                { x:1200,  z: -1500 },
+                { x:1600,  z:  -800 },
+                { x:1600,  z:   800 },
+                { x: 800,  z:  1200 },
+                { x:   0,  z:    0 }
+            ],
+            // 1: Downtown Loop
+            [
+                { x:   0,  z:    0 },
+                { x:   0,  z: -650 },
+                { x: 650,  z: -950 },
+                { x:1300,  z: -650 },
+                { x:1500,  z:    0 },
+                { x:1300,  z:  650 },
+                { x: 650,  z:  950 },
+                { x:   0,  z:  650 },
+                { x:   0,  z:    0 }
+            ],
+            // 2: Skyline Sprint
+            [
+                { x:   0,  z:    0 },
+                { x:   0,  z: -700 },
+                { x:   0,  z:-1600 },
+                { x: 900,  z:-2300 },
+                { x:2000,  z:-2300 },
+                { x:2600,  z:-1400 },
+                { x:2600,  z:  200 },
+                { x:1800,  z:  900 },
+                { x: 800,  z:  500 },
+                { x:   0,  z:    0 }
+            ],
+            // 3: Quantum Cross
+            [
+                { x:   0,  z:    0 },
+                { x:   0,  z: -900 },
+                { x: 700,  z:-1350 },
+                { x:1550,  z: -900 },
+                { x:1850,  z:    0 },
+                { x:1550,  z:  900 },
+                { x: 700,  z: 1350 },
+                { x:   0,  z:  900 },
+                { x:   0,  z:    0 }
+            ],
+            // 4: Solar Infinity
+            [
+                { x:    0, z:    0 },
+                { x: -700, z: -700 },
+                { x:-1300, z:   0 },
+                { x: -700, z:  700 },
+                { x:    0, z:   0 },
+                { x:  700, z: -700 },
+                { x: 1300, z:   0 },
+                { x:  700, z:  700 },
+                { x:    0, z:   0 }
+            ],
+            // 5: Obsidian Bobsled (crazy hilly bobsled layout, y ignored here)
+            [
+                { x:   0,  z:    0 },
+                { x:   0,  z: -500 },
+                { x: -300, z:-900 },
+                { x: -900, z:-1300 },
+                { x:-1500, z:-1400 },
+                { x:-2000, z:-900 },
+                { x:-2100, z:-200 },
+                { x:-1800, z: 400 },
+                { x:-1100, z: 800 },
+                { x: -300, z:1100 },
+                { x:  500, z:1200 },
+                { x: 1300, z: 900 },
+                { x: 1900, z: 300 },
+                { x: 2100, z:-400 },
+                { x: 1800, z:-1000 },
+                { x: 1200, z:-1500 },
+                { x:  400, z:-1800 },
+                { x: -400, z:-1900 },
+                { x:-1200, z:-1700 },
+                { x:-1700, z:-1200 },
+                { x:-1500, z: -500 },
+                { x: -900, z:   0 },
+                { x: -300, z: 200 },
+                { x:   0,  z:   0 }
+            ]
+        ];
+
+        // Draw “map photos” for each track using real layouts (same projection as minimap)
+        (function drawTrackThumbs() {
+            const thumbs = document.querySelectorAll('.track-thumb');
+            thumbs.forEach((cv) => {
+                const idx = Number(cv.dataset.track || 0);
+                const layout = TRACK_MINI_LAYOUTS[idx];
+                if (!layout || !layout.length) return;
+
+                const ctx = cv.getContext('2d');
+                const w = cv.width, h = cv.height;
+                ctx.clearRect(0,0,w,h);
+
+                // SPECIAL: make Obsidian Bobsled thumbnail pure black
+                if (idx === 5) {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(0, 0, w, h);
+                    return;
+                }
+
+                // background
+                const grad = ctx.createLinearGradient(0,0,w,h);
+                grad.addColorStop(0,'#05051a');
+                grad.addColorStop(1,'#140022');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0,0,w,h);
+
+                // compute bounds
+                let minX = Infinity, maxX = -Infinity;
+                let minZ = Infinity, maxZ = -Infinity;
+                for (const p of layout) {
+                    if (p.x < minX) minX = p.x;
+                    if (p.x > maxX) maxX = p.x;
+                    if (p.z < minZ) minZ = p.z;
+                    if (p.z > maxZ) maxZ = p.z;
+                }
+
+                const pad = 10;
+                const sx = (w - 2 * pad) / ((maxX - minX) || 1);
+                const sz = (h - 2 * pad) / ((maxZ - minZ) || 1);
+                const scale = Math.min(sx, sz);
+
+                function toMap(x, z) {
+                    const mapX = (x - minX) * scale + pad;
+                    const mapZ = (z - minZ) * scale + pad;
+                    // match minimap orientation: mirror X and flip vertically
+                    return { x: w - mapX, y: h - mapZ };
+                }
+
+                // track polyline (use same colors as in-game rails)
+                const colors = ['#00ffff','#ff6666','#44ff88','#ff00ff','#ffff66','#000000','#ff8800','#ffffff'];
+                ctx.strokeStyle = colors[idx] || '#0ff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                layout.forEach((pt, i) => {
+                    const m = toMap(pt.x, pt.z);
+                    if (i === 0) ctx.moveTo(m.x, m.y);
+                    else ctx.lineTo(m.x, m.y);
+                });
+                ctx.closePath();
+                ctx.stroke();
+
+                // start/finish tick at first point
+                const start = toMap(layout[0].x, layout[0].z);
+                const fs = 6;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(start.x - fs/2, start.y);
+                ctx.lineTo(start.x + fs/2, start.y);
+                ctx.stroke();
+            });
+        })();
+
+        function startGame(trackIndex = 0) {
+            import('https://cdn.skypack.dev/three@0.136.0').then(THREE => {
+                // --- DOM ELEMENT CACHE / SCENE / CAMERA / SUN ---
+                const speedBoxEl = document.getElementById('speed-box');
+                const healthBarEl = document.getElementById('health-bar');
+                const positionDisplayEl = document.getElementById('position-display');
+                const countdownDisplayEl = document.getElementById('countdown-display');
+                const lapDisplayEl = document.getElementById('lap-display');
+                const crashOverlayEl = document.getElementById('crash-overlay');
+                const crashTimerEl = document.getElementById('timer');
+                const finishMenuEl = document.getElementById('finish-menu');
+                const gameContainerEl = document.getElementById('game-container');
+
+                // --- THREE.JS CORE OBJECTS ---
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x050510);
+                // distance-based fog and global render distance
+                const RENDER_DISTANCE = 900;
+                const RENDER_DISTANCE_SQ = RENDER_DISTANCE * RENDER_DISTANCE;
+                scene.fog = new THREE.Fog(0x050510, 200, RENDER_DISTANCE);
+
+                // CHANGED: keep far clip large so red sun is always rendered
+                const camera = new THREE.PerspectiveCamera(
+                    75,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    3500 // far plane decoupled from render distance
+                );
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.domElement.id = 'three-canvas';
+                document.body.appendChild(renderer.domElement);
+
+                // Add resize handling
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                // --- THE SUN ---
+                const sun = new THREE.Group();
+                sun.add(new THREE.Mesh(
+                    new THREE.SphereGeometry(150, 32),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        fog: false            // keep bright through fog
+                    })
+                ));
+                sun.add(new THREE.Mesh(
+                    new THREE.SphereGeometry(600, 32),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x00ffff,
+                        transparent: true,
+                        opacity: 0.1,
+                        blending: THREE.AdditiveBlending,
+                        fog: false
+                    })
+                ));
+                // scene.add(sun); // REMOVED: white sun no longer visible
+
+                // BIG RED SUN (ONLY SUN, USED AS SKY OBJECT)
+                const redSun = new THREE.Group();
+                redSun.add(new THREE.Mesh(
+                    new THREE.SphereGeometry(220, 32),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff2222,
+                        fog: false
+                    })
+                ));
+                // aura: make base geometry smaller and then also scale it down
+                const redAura = new THREE.Mesh(
+                    new THREE.SphereGeometry(380, 32), // was 520 – smaller halo
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff0000,
+                        transparent: true,
+                        opacity: 0.18,
+                        blending: THREE.AdditiveBlending,
+                        fog: false
+                    })
+                );
+                redAura.scale.set(0.6, 0.6, 0.6);     // extra shrink so it doesn’t reach buildings
+                redSun.add(redAura);
+
+                redSun.scale.set(4, 4, 4); // keep overall sun size the same
+                scene.add(redSun);
+
+                // --- HOVERBIKE MODEL FACTORY (shared by player and bots) ---
+                function createHoverBike(stripeColorA, stripeColorB, riderBaseColor) {
+                    const group = new THREE.Group();
+
+                    const bikeBaseMat = new THREE.MeshBasicMaterial({ color: 0x222222 });  // dark grey body
+                    const stripeMatA  = new THREE.MeshBasicMaterial({ color: stripeColorA });
+                    const stripeMatB  = new THREE.MeshBasicMaterial({ color: stripeColorB });
+                    const suitMatA    = new THREE.MeshBasicMaterial({ color: stripeColorA });
+                    const suitMatB    = new THREE.MeshBasicMaterial({ color: stripeColorB });
+                    const darkMat     = new THREE.MeshBasicMaterial({ color: riderBaseColor });
+                    const helmetMat   = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                    const visorMat    = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+                    // Narrow central chassis
+                    const chassis = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.6, 0.55, 5.0),
+                        bikeBaseMat
+                    );
+                    chassis.position.set(0, 0.25, 0);
+                    group.add(chassis);
+
+                    // Slim side fairings (still dark grey)
+                    const fairingGeo = new THREE.BoxGeometry(0.15, 0.5, 3.4);
+                    const leftFairing = new THREE.Mesh(fairingGeo, bikeBaseMat);
+                    leftFairing.position.set(-0.45, 0.18, 0.1);
+                    group.add(leftFairing);
+                    const rightFairing = leftFairing.clone();
+                    rightFairing.position.x = 0.45;
+                    group.add(rightFairing);
+
+                    // Single center stripe made of two thin halves (A/B) on the top
+                    const stripeGeo = new THREE.BoxGeometry(0.09, 0.06, 4.6);
+                    const stripeLeft = new THREE.Mesh(stripeGeo, stripeMatA);
+                    stripeLeft.position.set(-0.06, 0.37, 0);
+                    group.add(stripeLeft);
+                    const stripeRight = new THREE.Mesh(stripeGeo, stripeMatB);
+                    stripeRight.position.set(0.06, 0.37, 0);
+                    group.add(stripeRight);
+
+                    // Front nose (dark grey)
+                    const nose = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.6, 0.18, 1.6, 18),
+                        bikeBaseMat
+                    );
+                    nose.rotation.x = Math.PI / 2;
+                    nose.position.set(0, 0.4, -2.7);
+                    group.add(nose);
+
+                    // Small windshield (neutral tinted)
+                    const windshield = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.7, 0.45, 0.5),
+                        new THREE.MeshBasicMaterial({
+                            color: 0x222244,
+                            transparent: true,
+                            opacity: 0.6
+                        })
+                    );
+                    windshield.position.set(0, 0.9, -1.4);
+                    group.add(windshield);
+
+                    // Compact rear tail (dark grey)
+                    const tail = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.5, 0.35, 1.4),
+                        bikeBaseMat
+                    );
+                    tail.position.set(0, 0.5, 2.2);
+                    group.add(tail);
+
+                    // --- BRAKE LIGHTS (player & bots share geometry; color driven per-frame for player) ---
+                    const brakeLightMat = new THREE.MeshBasicMaterial({
+                        color: 0x220000, // dim red when not braking
+                        transparent: true,
+                        opacity: 0.9
+                    });
+                    const brakeLightGeo = new THREE.BoxGeometry(0.18, 0.18, 0.05);
+                    const leftBrake = new THREE.Mesh(brakeLightGeo, brakeLightMat);
+                    leftBrake.position.set(-0.18, 0.55, 2.9);
+                    group.add(leftBrake);
+                    const rightBrake = leftBrake.clone();
+                    rightBrake.position.x = 0.18;
+                    group.add(rightBrake);
+                    group.userData.brakeLights = {
+                        mat: brakeLightMat,
+                        meshes: [leftBrake, rightBrake]
+                    };
+
+                    // Simple anti‑grav pads (dark)
+                    const padGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.1, 14);
+                    const padOffsets = [
+                        [-0.35, -0.45, -1.2],
+                        [ 0.35, -0.45, -1.2],
+                        [-0.35, -0.45,  1.2],
+                        [ 0.35, -0.45,  1.2],
+                    ];
+                    padOffsets.forEach(([x, y, z]) => {
+                        const p = new THREE.Mesh(padGeo, bikeBaseMat);
+                        p.position.set(x, y, z);
+                        group.add(p);
+                    });
+
+                    // --- Rider: MotoGP-style posture and suit ---
+
+                    // Pelvis / hips
+                    const hips = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.45, 0.35, 0.6),
+                        darkMat
+                    );
+                    hips.position.set(0, 0.75, 0.0);
+                    group.add(hips);
+
+                    // Torso with colored front panel
+                    const torso = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.6, 0.9, 1.4),
+                        darkMat
+                    );
+                    torso.position.set(0, 1.1, -0.5);
+                    torso.rotation.x = -0.55;
+                    group.add(torso);
+
+                    const chestPanel = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.5, 0.7, 0.1),
+                        suitMatA
+                    );
+                    chestPanel.position.set(0, 1.15, -1.1);
+                    chestPanel.rotation.x = -0.55;
+                    group.add(chestPanel);
+
+                    const sidePanelL = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.18, 0.6, 0.1),
+                        suitMatB
+                    );
+                    sidePanelL.position.set(-0.32, 1.1, -1.0);
+                    sidePanelL.rotation.x = -0.55;
+                    group.add(sidePanelL);
+                    const sidePanelR = sidePanelL.clone();
+                    sidePanelR.position.x = 0.32;
+                    group.add(sidePanelR);
+
+                    // Head (helmet) + visor that wraps around a bit
+                    const head = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.32, 18, 18),
+                        helmetMat
+                    );
+                    head.position.set(0, 1.75, -1.1);
+                    group.add(head);
+
+                    // Front visor (moved slightly up)
+                    const visor = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.52, 0.26, 0.05),
+                        visorMat
+                    );
+                    visor.position.set(0, 1.74, -1.4);
+                    group.add(visor);
+
+                    // Short side pieces so visor looks like it wraps around helmet
+                    const sideVisorGeo = new THREE.BoxGeometry(0.08, 0.26, 0.10);
+
+                    const leftSideVisor = new THREE.Mesh(sideVisorGeo, visorMat);
+                    leftSideVisor.position.set(-0.26, 1.74, -1.32);
+                    leftSideVisor.rotation.y = 0.45;
+                    group.add(leftSideVisor);
+
+                    const rightSideVisor = new THREE.Mesh(sideVisorGeo, visorMat);
+                    rightSideVisor.position.set(0.26, 1.74, -1.32);
+                    rightSideVisor.rotation.y = -0.45;
+                    group.add(rightSideVisor);
+
+                    // Arms reaching to bars
+                    const upperArmGeo = new THREE.BoxGeometry(0.18, 0.18, 0.55);
+                    const foreArmGeo  = new THREE.BoxGeometry(0.16, 0.16, 0.7);
+
+                    const leftUpper = new THREE.Mesh(upperArmGeo, suitMatA);
+                    leftUpper.position.set(-0.42, 1.35, -0.9);
+                    leftUpper.rotation.x = -0.9;
+                    leftUpper.rotation.z = 0.4;
+                    group.add(leftUpper);
+
+                    const leftFore = new THREE.Mesh(foreArmGeo, suitMatB);
+                    leftFore.position.set(-0.6, 1.05, -1.6);
+                    leftFore.rotation.x = -1.1;
+                    leftFore.rotation.z = 0.3;
+                    group.add(leftFore);
+
+                    const rightUpper = leftUpper.clone();
+                    rightUpper.position.x = 0.42;
+                    rightUpper.rotation.z = -0.4;
+                    group.add(rightUpper);
+
+                    const rightFore = leftFore.clone();
+                    rightFore.position.x = 0.6;
+                    rightFore.rotation.z = -0.3;
+                    group.add(rightFore);
+
+                    // Hands on clip-ons
+                    const handGeo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+                    const leftHand = new THREE.Mesh(handGeo, darkMat);
+                    leftHand.position.set(-0.65, 0.95, -2.0);
+                    group.add(leftHand);
+                    const rightHand = leftHand.clone();
+                    rightHand.position.x = 0.65;
+                    group.add(rightHand);
+
+                    // Legs back
+                    const thighGeo = new THREE.BoxGeometry(0.22, 0.22, 0.9);
+                    const shinGeo  = new THREE.BoxGeometry(0.2, 0.2, 0.8);
+
+                    const leftThigh = new THREE.Mesh(thighGeo, suitMatA);
+                    leftThigh.position.set(-0.28, 0.6, 0.2);
+                    leftThigh.rotation.x = 0.9;
+                    group.add(leftThigh);
+
+                    const leftShin = new THREE.Mesh(shinGeo, suitMatB);
+                    leftShin.position.set(-0.28, 0.4, 0.95);
+                    leftShin.rotation.x = 1.0;
+                    group.add(leftShin);
+
+                    const rightThigh = leftThigh.clone();
+                    rightThigh.position.x = 0.28;
+                    group.add(rightThigh);
+
+                    const rightShin = leftShin.clone();
+                    rightShin.position.x = 0.28;
+                    group.add(rightShin);
+
+                    // Boots
+                    const bootGeo = new THREE.BoxGeometry(0.24, 0.2, 0.35);
+                    const leftBoot = new THREE.Mesh(bootGeo, darkMat);
+                    leftBoot.position.set(-0.28, 0.2, 1.35);
+                    group.add(leftBoot);
+                    const rightBoot = leftBoot.clone();
+                    rightBoot.position.x = 0.28;
+                    group.add(rightBoot);
+
+                    // Handlebar
+                    const bar = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.04, 0.04, 1.3, 10),
+                        new THREE.MeshBasicMaterial({ color: 0xdddddd })
+                    );
+                    bar.rotation.z = Math.PI / 2;
+                    bar.position.set(0, 1.02, -1.8);
+                    group.add(bar);
+
+                    group.position.y = 0;
+                    group.scale.set(2, 2, 2); // double size of everyone
+                    return group;
+                }
+
+                // --- THE BIKE --- (player hoverbike) ---
+                const bike = createHoverBike(0xff0000, 0x0000ff, 0x111111);
+                scene.add(bike);
+
+                // --- TRACK SYSTEM / TRACK_DEFS ---
+                const TRACK_DEFS = [
+                    {
+                        name: 'Neon Summit',
+                        roadWidth: 55,
+                        railColor: 0x00ffff,
+                        groundColor: 0x000000,
+                        buildingColors: [0x111122, 0x111133, 0x111144],
+                        city: {
+                            segmentsAlong: 220,
+                            ringsPerSide: 4,
+                            radialWidth: 10,
+                            trackClearance: 10,
+                            sideRoadSegments: 70,
+                            lightSamples: 80,
+                            useTrees: false
+                        },
+                        standConfig: { offsetAlong: -80, depthScale: 1.1, sides: [-1,1] },
+                        points: [
+                            new THREE.Vector3(0, 0, 0),
+                            new THREE.Vector3(0, 0, -800),
+                            new THREE.Vector3(400, 120, -1500),
+                            new THREE.Vector3(1200, 120, -1500),
+                            new THREE.Vector3(1600, 0, -800),
+                            new THREE.Vector3(1600, 0, 800),
+                            new THREE.Vector3(800, 0, 1200),
+                            new THREE.Vector3(0, 0, 0)
+                        ]
+                    },
+                    {
+                        name: 'Downtown Loop',
+                        roadWidth: 52,
+                        railColor: 0xff5555,
+                        groundColor: 0x050505,
+                        buildingColors: [0x221111, 0x331111, 0x442222],
+                        // dense inner-city canyon, fewer radial rings but taller buildings
+                        city: {
+                            segmentsAlong: 260,
+                            ringsPerSide: 3,
+                            radialWidth: 9,
+                            trackClearance: 7,
+                            sideRoadSegments: 40,
+                            lightSamples: 110,
+                            useTrees: false
+                        },
+                        standConfig: { offsetAlong: 40, depthScale: 0.9, sides: [1] }, // single big stand on one side
+                        points: [
+                            new THREE.Vector3(0, 0,   0),
+                            new THREE.Vector3(0, 0, -650),
+                            new THREE.Vector3(650, 0,-950),
+                            new THREE.Vector3(1300,0,-650),
+                            new THREE.Vector3(1500,0,   0),
+                            new THREE.Vector3(1300,0, 650),
+                            new THREE.Vector3(650, 0, 950),
+                            new THREE.Vector3(0,   0, 650),
+                            new THREE.Vector3(0,   0,   0)
+                        ]
+                    },
+                    {
+                        name: 'Skyline Sprint',
+                        roadWidth: 60,
+                        railColor: 0x44ff88,
+                        groundColor: 0x000010,
+                        buildingColors: [0x112211, 0x114422, 0x116644],
+                        // more sparse buildings, trees along the outer edges, long elevated section
+                        city: {
+                            segmentsAlong: 160,
+                            ringsPerSide: 2,
+                            radialWidth: 14,
+                            trackClearance: 14,
+                            sideRoadSegments: 35,
+                            lightSamples: 60,
+                            useTrees: true
+                        },
+                        standConfig: { offsetAlong: 120, depthScale: 1.3, sides: [-1,1] },
+                        points: [
+                            new THREE.Vector3(0,   0,   0),
+                            new THREE.Vector3(0,  40, -700),
+                            new THREE.Vector3(0, 140,-1600),
+                            new THREE.Vector3(900,180,-2300),
+                            new THREE.Vector3(2000,180,-2300),
+                            new THREE.Vector3(2600,130,-1400),
+                            new THREE.Vector3(2600, 40,  200),
+                            new THREE.Vector3(1800,  0,  900),
+                            new THREE.Vector3(800,   0,  500),
+                            new THREE.Vector3(0,     0,   0)
+                        ]
+                    },
+                    {
+                        name: 'Quantum Cross',
+                        roadWidth: 55,
+                        railColor: 0xff00ff,
+                        groundColor: 0x000000,
+                        buildingColors: [0x221122, 0x332244, 0x443355],
+                        // figure‑8 style with a real bridge section over itself
+                        hasBridge: true,
+                        city: {
+                            segmentsAlong: 200,
+                            ringsPerSide: 3,
+                            radialWidth: 11,
+                            trackClearance: 10,
+                            sideRoadSegments: 50,
+                            lightSamples: 70,
+                            useTrees: false
+                        },
+                        standConfig: { offsetAlong: -40, depthScale: 1.0, sides: [-1,1] },
+                        // raised bridge section much higher so it clears the lower road cleanly
+                        points: [
+                            new THREE.Vector3(0,    0,    0),
+                            new THREE.Vector3(0,    0, -900),
+                            new THREE.Vector3(700,  0,-1350),
+                            new THREE.Vector3(1550,200,-900),  // was 120
+                            new THREE.Vector3(1850,260,   0),  // was 140
+                            new THREE.Vector3(1550,200, 900),  // was 120
+                            new THREE.Vector3(700,  0,1350),
+                            new THREE.Vector3(0,    0, 900),
+                            new THREE.Vector3(0,    0,   0)
+                        ]
+                    },
+                    {
+                        name: 'Solar Infinity',
+                        roadWidth: 58,
+                        railColor: 0xffff00,
+                        groundColor: 0x000000,
+                        buildingColors: [0x332200, 0x443300, 0x665500],
+                        hasBridge: true,
+                        special: 'solar8',
+                        city: {
+                            segmentsAlong: 220,
+                            ringsPerSide: 3,
+                            radialWidth: 11,
+                            trackClearance: 11,
+                            sideRoadSegments: 50,
+                            lightSamples: 70,
+                            useTrees: false
+                        },
+                        standConfig: { offsetAlong: 0, depthScale: 1.2, sides: [-1, 1] },
+                        // higher crossover and smoother ramps with more clearance
+                        points: [
+                            new THREE.Vector3(0,    0,    0),
+                            new THREE.Vector3(-700, 0,  -700),
+                            new THREE.Vector3(-1300,10,   0),
+                            new THREE.Vector3(-700,70,  700),   // was 45
+                            new THREE.Vector3(0,  190,    0),   // was 130
+                            new THREE.Vector3(700,70, -700),    // was 45
+                            new THREE.Vector3(1300,10,   0),
+                            new THREE.Vector3(700, 0,  700),
+                            new THREE.Vector3(0,    0,    0)
+                        ]
+                    },
+                    {
+                        name: 'Obsidian Bobsled',
+                        roadWidth: 50,
+                        railColor: 0x111111,
+                        groundColor: 0x000000,
+                        buildingColors: [0x111111, 0x151515, 0x1a1a1a],
+                        special: 'obsidian',
+                        city: {
+                            segmentsAlong: 260,
+                            ringsPerSide: 2,
+                            radialWidth: 12,
+                            trackClearance: 18,
+                            sideRoadSegments: 40,
+                            lightSamples: 90,
+                            useTrees: false
+                        },
+                        standConfig: { offsetAlong: 0, depthScale: 1.4, sides: [-1, 1] },
+                        // hills made more dramatic to add vertical clearance at self-crossings
+                        points: [
+                            new THREE.Vector3(   0,  40,    0),  // was y=10 – lifted
+                            new THREE.Vector3(   0,  70, -250), // was y=50 – lifted
+                            new THREE.Vector3( -250, 110, -650),
+                            new THREE.Vector3( -600, 170, -950),
+                            new THREE.Vector3( -950, 170, -650),
+                            new THREE.Vector3( -650, 140, -250),
+                            // ↑ keep approach as-is
+                            new THREE.Vector3( -200, 170,   50),
+                            new THREE.Vector3(  200, 150,  250),
+                            new THREE.Vector3(  650, 190,  550),
+                            new THREE.Vector3( 1050, 180,  250),
+                            new THREE.Vector3(  650, 160,  -50),
+                            new THREE.Vector3(  200, 130, -250),
+                            new THREE.Vector3( -150, 160, -150),
+                            new THREE.Vector3( -450, 130,  150),
+                            new THREE.Vector3( -750, 180,  550),
+                            new THREE.Vector3( -350, 210,  900),
+                            new THREE.Vector3(  150, 210,  950),
+                            new THREE.Vector3(  650, 190,  700),
+                            new THREE.Vector3( 1000, 160,  300),
+                            new THREE.Vector3( 1200, 130, -200),
+                            new THREE.Vector3( 1000, 140, -700),
+                            new THREE.Vector3(  600, 170,-1050),
+                            new THREE.Vector3(  150, 190,-1200),
+                            new THREE.Vector3( -350, 170,-1150),
+                            new THREE.Vector3( -800, 140, -900),
+                            new THREE.Vector3(-1100, 110, -500),
+                            new THREE.Vector3( -900,  80, -100),
+                            new THREE.Vector3( -500,  55,  100),
+                            new THREE.Vector3( -150,  60,   50), // was y=25 – lifted near (-11,12,-5)
+                            new THREE.Vector3(    0,  40,    0)  // was y=10 – lifted to match start
+                        ]
+                    }
+                ];
+
+                const activeTrack = TRACK_DEFS[trackIndex] || TRACK_DEFS[0];
+                const trackPoints = activeTrack.points;
+                const roadWidth  = activeTrack.roadWidth;
+                const railColor  = activeTrack.railColor;
+                const groundColor = activeTrack.groundColor;
+                const buildingPalette = activeTrack.buildingColors || [0x111122,0x111133,0x111144];
+                const citySettings = activeTrack.city || {
+                    segmentsAlong: 220,
+                    ringsPerSide: 4,
+                    radialWidth: 10,
+                    trackClearance: 10,
+                    sideRoadSegments: 70,
+                    lightSamples: 80,
+                    useTrees: false
+                };
+
+                // geometry resolution along the track
+                const res = 1000;
+
+                // WORLD BOUNDS FOR MINIMAP
+                let worldMinX = Infinity, worldMaxX = -Infinity;
+                let worldMinZ = Infinity, worldMaxZ = -Infinity;
+                for (const pt of trackPoints) {
+                    if (pt.x < worldMinX) worldMinX = pt.x;
+                    if (pt.x > worldMaxX) worldMaxX = pt.x; // FIXED: was maxX
+                    if (pt.z < worldMinZ) worldMinZ = pt.z;
+                    if (pt.z > worldMaxZ) worldMaxZ = pt.z; // FIXED: was maxZ
+                }
+
+                const curve = new THREE.CatmullRomCurve3(trackPoints, true);
+
+                // Visual Road
+                const roadGeo = new THREE.PlaneGeometry(1, 1, res, 1);
+                const roadMesh = new THREE.Mesh(
+                    roadGeo,
+                    new THREE.MeshBasicMaterial({color: 0x333333, side: THREE.DoubleSide})
+                );
+                scene.add(roadMesh);
+
+                // Rails – still compute points for physics, but skip visible tubes for tracks with noRails=true
+                const railLPoints = [], railRPoints = [];
+                for (let i = 0; i <= res; i++) {
+                    const t = i / res;
+                    const p = curve.getPointAt(t);
+                    const tan = curve.getTangentAt(t);
+                    const norm = new THREE.Vector3(0, 1, 0).cross(tan).normalize();
+                    railLPoints.push(p.clone().add(norm.clone().multiplyScalar(roadWidth / 2)));
+                    railRPoints.push(p.clone().add(norm.clone().multiplyScalar(-roadWidth / 2)));
+                }
+
+                let railL = null, railR = null;
+                if (!activeTrack.noRails) {
+                    railL = new THREE.Mesh(
+                        new THREE.TubeGeometry(
+                            new THREE.CatmullRomCurve3(railLPoints, true),
+                            res, 1.0, 8, true
+                        ),
+                        new THREE.MeshBasicMaterial({ color: railColor })
+                    );
+                    railR = new THREE.Mesh(
+                        new THREE.TubeGeometry(
+                            new THREE.CatmullRomCurve3(railRPoints, true),
+                            res, 1.0, 8, true
+                        ),
+                        new THREE.MeshBasicMaterial({ color: railColor })
+                    );
+                    scene.add(railL, railR);
+                }
+
+                // --- BLACK GROUND PLANE (per-track color) ---
+                const groundGeo = new THREE.PlaneGeometry(4000, 4000);
+                const groundMesh = new THREE.Mesh(
+                    groundGeo,
+                    new THREE.MeshBasicMaterial({color: groundColor})
+                );
+                groundMesh.position.y = -50;
+                groundMesh.rotation.x = -Math.PI / 2;
+                scene.add(groundMesh);
+                const groundY = groundMesh.position.y;
+
+                // Road Mesh Vertices
+                const vpos = roadMesh.geometry.attributes.position;
+                for(let i=0; i<=res; i++){
+                    vpos.setXYZ(i, railLPoints[i].x, railLPoints[i].y, railLPoints[i].z);
+                    vpos.setXYZ(i+res+1, railRPoints[i].x, railRPoints[i].y, railRPoints[i].z);
+                }
+                vpos.needsUpdate = true;
+
+                // --- STARTING LINE & GATE ---
+                {
+                    const startLinePt = curve.getPointAt(0);
+                    const startLineTan = curve.getTangentAt(0).normalize();
+                    const startLineNorm = new THREE.Vector3(0, 1, 0).cross(startLineTan).normalize();
+                    const trackUp = new THREE.Vector3(0, 1, 0);
+
+                    // Starting line (white and black stripes)
+                    const startLineGeo = new THREE.PlaneGeometry(roadWidth, 10);
+                    const startLineCanvas = document.createElement('canvas');
+                    startLineCanvas.width = 256; startLineCanvas.height = 256;
+                    const ctx = startLineCanvas.getContext('2d');
+                    for (let i = 0; i < 20; i++) {
+                        ctx.fillStyle = i % 2 === 0 ? '#ffffff' : '#000000';
+                        ctx.fillRect(i * (256 / 20), 0, 256 / 20, 256);
+                    }
+                    const startLineTexture = new THREE.CanvasTexture(startLineCanvas);
+                    startLineTexture.magFilter = THREE.NearestFilter;
+                    const startLineMat = new THREE.MeshBasicMaterial({
+                        map: startLineTexture,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+                    const startLine = new THREE.Mesh(startLineGeo, startLineMat);
+                    startLine.position.copy(startLinePt).y += 15;
+
+                    const quat = new THREE.Quaternion();
+                    const mat = new THREE.Matrix4().makeBasis(startLineNorm, trackUp, startLineTan.negate());
+                    quat.setFromRotationMatrix(mat);
+                    startLine.quaternion.copy(quat);
+                    scene.add(startLine);
+
+                    // Support poles at each end
+                    const poleHeight = 15;
+                    const poleRadius = 0.4;
+                    const poleGeo = new THREE.CylinderGeometry(poleRadius, poleRadius, poleHeight, 8);
+                    const poleMat = new THREE.MeshBasicMaterial({color: 0xcccccc});
+                    const leftPole = new THREE.Mesh(poleGeo, poleMat);
+                    leftPole.position.copy(startLinePt).addScaledVector(startLineNorm, -roadWidth/2).y += poleHeight/2;
+                    scene.add(leftPole);
+                    const rightPole = new THREE.Mesh(poleGeo, poleMat);
+                    rightPole.position.copy(startLinePt).addScaledVector(startLineNorm, roadWidth/2).y += poleHeight/2;
+                    scene.add(rightPole);
+                }
+
+                // --- OPTIONAL BRIDGE SUPPORTS ---
+                if (activeTrack.hasBridge) {
+                    const supportGeo = new THREE.CylinderGeometry(1, 1, 1, 8);
+                    const supportMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+                    const samples = 50;
+                    for (let i = 0; i <= samples; i++) {
+                        const t = i / samples;
+                        const p = curve.getPointAt(t);
+                        const heightAboveGround = p.y - groundY;
+                        if (heightAboveGround < 60) continue; // was 35 – only the truly high bridge spans get supports
+                        const col = new THREE.Mesh(supportGeo, supportMat);
+                        col.scale.set(3, heightAboveGround, 3);
+                        col.position.set(p.x, groundY + heightAboveGround / 2, p.z);
+                        scene.add(col);
+                    }
+                }
+
+                // NEW: city decoration culling helpers (must be defined BEFORE addCity uses them)
+                const cityDecorations = [];
+                const _cityForward = new THREE.Vector3();
+                const _cityOffset = new THREE.Vector3();
+
+                // --- CITY / BUILDINGS / BILLBOARDS / SIDE ROADS (DENSE BELTS) ---
+                function addCity() {
+                    const cityGroup = new THREE.Group();
+                    scene.add(cityGroup);
+                    cityDecorations.length = 0; // safe now, array already declared
+
+                    const baseCubeGeo   = new THREE.BoxGeometry(1, 1, 1);
+                    const baseRoadGeo   = new THREE.PlaneGeometry(1, 1);
+                    const lightBandGeo  = new THREE.PlaneGeometry(1, 1);
+                    const streetPoleGeo   = new THREE.CylinderGeometry(0.12, 0.12, 8, 6);
+                    const streetLampGeo   = new THREE.SphereGeometry(0.4, 8, 8);
+                    const billboardGeo    = new THREE.PlaneGeometry(8, 4);
+                    const windowPlaneGeo  = new THREE.PlaneGeometry(1, 1);
+
+                    const buildingMats = buildingPalette.map(c => new THREE.MeshBasicMaterial({ color: c }));
+                    const roofMat = new THREE.MeshBasicMaterial({ color: 0x222244 });
+                    const windowMat = new THREE.MeshBasicMaterial({ color: 0x66ffff, transparent: true, opacity: 0.9 });
+                    const lightBandMat = new THREE.MeshBasicMaterial({ color: 0xffffaa, transparent: true, opacity: 0.9 });
+                    const roadMat = new THREE.MeshBasicMaterial({ color: 0x151515, side: THREE.DoubleSide });
+                    const streetPoleMat = new THREE.MeshBasicMaterial({ color: 0x666666 });
+                    const streetLampMat = new THREE.MeshBasicMaterial({ color: 0xffeeaa, transparent: true, opacity: 1.0 });
+
+                    const treeTrunkGeo = new THREE.CylinderGeometry(0.4, 0.6, 6, 6);
+                    const treeLeafGeo  = new THREE.SphereGeometry(2.4, 8, 8);
+                    const treeTrunkMat = new THREE.MeshBasicMaterial({ color: 0x553322 });
+                    const treeLeafMat  = new THREE.MeshBasicMaterial({ color: 0x228833 });
+
+                    function makeBillboardMaterial(text, color) {
+                        const c = document.createElement('canvas');
+                        c.width = 256; c.height = 128;
+                        const ctx = c.getContext('2d');
+                        ctx.fillStyle = '#050015';
+                        ctx.fillRect(0, 0, c.width, c.height);
+                        ctx.fillStyle = color;
+                        ctx.font = 'bold 40px Segoe UI';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(text, c.width / 2, c.height / 2);
+                        const tex = new THREE.CanvasTexture(c);
+                        tex.needsUpdate = true;
+                        return new THREE.MeshBasicMaterial({
+                            map: tex,
+                            transparent: true,
+                            fog: false,
+                            depthWrite: false
+                        });
+                    }
+
+                    const billboardMats = [
+                        makeBillboardMaterial('NEON GRID',    '#0ff'),
+                        makeBillboardMaterial('BREAKNECK GP', '#f0f'),
+                        makeBillboardMaterial('QUANTUM OIL',  '#ff0'),
+                        makeBillboardMaterial('NOVA DATA',    '#0f0')
+                    ];
+
+                    const up = new THREE.Vector3(0, 1, 0);
+                    const special = activeTrack.special || null;
+                    const isSolarInfinity = special === 'solar8';
+                    const isObsidian = special === 'obsidian';
+
+                    // NEW: custom stadium for Obsidian Bobsled – no city buildings at all
+                    if (isObsidian) {
+                        // simple “crowd texture” for stand faces
+                        function makeCrowdMaterial() {
+                            const c = document.createElement('canvas');
+                            c.width = 512; c.height = 256;
+                            const ctx = c.getContext('2d');
+                            ctx.fillStyle = '#050505';
+                            ctx.fillRect(0, 0, c.width, c.height);
+                            for (let i = 0; i < 500; i++) {
+                                const x = Math.random() * c.width;
+                                const y = Math.random() * c.height;
+                                const r = Math.random();
+                                if (r < 0.33) ctx.fillStyle = '#ff4444';
+                                else if (r < 0.66) ctx.fillStyle = '#ffff44';
+                                else ctx.fillStyle = '#44aaff';
+                                ctx.fillRect(x, y, 3, 3);
+                            }
+                            const tex = new THREE.CanvasTexture(c);
+                            tex.needsUpdate = true;
+                            return new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+                        }
+
+                        const standGeo = new THREE.BoxGeometry(1, 1, 1);
+                        const crowdGeo = new THREE.PlaneGeometry(1, 1);
+                        const standMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+                        const crowdMat = makeCrowdMaterial();
+
+                        const radius = 2200;          // outside the whole black track
+                        const standCount = 18;
+                        const standHeight = 260;
+                        const standDepth = 550;
+
+                        for (let i = 0; i < standCount; i++) {
+                            const theta = (i / standCount) * Math.PI * 2;
+                            const x = Math.cos(theta) * radius;
+                            const z = Math.sin(theta) * radius;
+                            const standWidth = (Math.PI * 2 * radius / standCount) * 0.9;
+
+                            const stand = new THREE.Mesh(standGeo, standMat);
+                            stand.scale.set(standWidth, standHeight, standDepth);
+                            stand.position.set(x, groundY + standHeight / 2, z);
+                            stand.lookAt(0, stand.position.y * 0.4, 0); // tilt toward center
+                            cityGroup.add(stand);
+
+                            // inner “crowd wall”
+                            const inward = new THREE.Vector3(-x, 0, -z).normalize();
+                            const crowd = new THREE.Mesh(crowdGeo, crowdMat);
+                            crowd.scale.set(standWidth * 0.95, standHeight * 0.8, 1);
+                            const innerPos = new THREE.Vector3(x, groundY + standHeight * 0.65, z)
+                                .addScaledVector(inward, standDepth * 0.5 + 5);
+                            crowd.position.copy(innerPos);
+                            crowd.lookAt(0, crowd.position.y, 0);
+                            cityGroup.add(crowd);
+                        }
+
+                        // ring of stadium lights above stands
+                        const lightGeo = new THREE.SphereGeometry(10, 8, 8);
+                        const lightMat = new THREE.MeshBasicMaterial({ color: 0x6666ff });
+                        const lightRadius = radius + 120;
+                        for (let i = 0; i < standCount; i++) {
+                            const theta = (i / standCount) * Math.PI * 2;
+                            const lx = Math.cos(theta) * lightRadius;
+                            const lz = Math.sin(theta) * lightRadius;
+                            const ly = groundY + 420;
+                            const lamp = new THREE.Mesh(lightGeo, lightMat);
+                            lamp.position.set(lx, ly, lz);
+                            cityGroup.add(lamp);
+                        }
+
+                        // dark floor “bowl” to help sell the stadium feeling
+                        const bowlGeo = new THREE.RingGeometry(1200, radius - 100, 64);
+                        const bowlMat = new THREE.MeshBasicMaterial({ color: 0x080808, side: THREE.DoubleSide });
+                        const bowl = new THREE.Mesh(bowlGeo, bowlMat);
+                        bowl.rotation.x = -Math.PI / 2;
+                        bowl.position.y = groundY + 0.1;
+                        cityGroup.add(bowl);
+
+                        return; // no normal city on this track
+                    }
+
+                    // --- BUILDING BELTS AROUND TRACK (for non‑Obsidian tracks only) ---
+                    const segmentsAlong  = citySettings.segmentsAlong || 220;
+                    const ringsPerSide   = citySettings.ringsPerSide || 4;
+                    const radialWidth    = citySettings.radialWidth || 10;
+                    const trackClearance = citySettings.trackClearance || 10;
+
+                    let innerHoleRadiusSq = 0;
+                    if (isSolarInfinity) {
+                        const r = 900;
+                        innerHoleRadiusSq = r * r;
+                    }
+
+                    for (let i = 0; i < segmentsAlong; i++) {
+                        const t0 = i / segmentsAlong;
+                        const t1 = (i + 1) / segmentsAlong;
+                        const c0  = curve.getPointAt(t0);
+                        const c1  = curve.getPointAt(t1);
+                        const tan = curve.getTangentAt(t0).normalize();
+                        const norm = new THREE.Vector3().crossVectors(up, tan).normalize();
+                        const segLen     = c0.distanceTo(c1) || 1;
+                        const depthAlong = segLen * 1.05;
+
+                        const dt = Math.abs(t0);
+                        const distFromStart = Math.min(dt, 1 - dt);
+
+                        for (const side of [-1, 1]) {
+                            for (let ring = 0; ring < ringsPerSide; ring++) {
+                                // Clear all four rings near start/finish so stands are visible
+                                if (distFromStart < 0.10 && ring <= 3) continue;
+
+                                // NEW: extra gap from road on Obsidian so nothing touches track
+                                const extraGap = isObsidian ? 25 : 0;
+
+                                const lateralCenter =
+                                    (roadWidth / 2) +
+                                    trackClearance + extraGap +
+                                    radialWidth * ring +
+                                    radialWidth * 0.5;
+
+                                const basePos = c0.clone()
+                                    .addScaledVector(norm, side * lateralCenter);
+                                const centerPos = basePos.clone()
+                                    .addScaledVector(tan, depthAlong * 0.5);
+
+                                // Skip central “hole” for special tracks
+                                if (innerHoleRadiusSq > 0) {
+                                    const r2 = centerPos.x * centerPos.x + centerPos.z * centerPos.z;
+                                    if (r2 < innerHoleRadiusSq) continue;
+                                }
+
+                                // NEW: slightly slimmer buildings on Obsidian
+                                const width  = (isObsidian ? radialWidth * 0.8 : radialWidth * 1.02);
+                                const depth  = depthAlong;
+                                const height = 60 + Math.random() * 200;
+
+                                // Core block to ground
+                                const core = new THREE.Mesh(
+                                    baseCubeGeo,
+                                    buildingMats[Math.floor(Math.random() * buildingMats.length)]
+                                );
+                                const trackY    = centerPos.y;
+                                const desiredTop = trackY + height;
+                                const fullHeight = desiredTop - groundY;
+                                core.scale.set(width, fullHeight, depth);
+                                core.position.set(
+                                    centerPos.x,
+                                    groundY + fullHeight / 2,
+                                    centerPos.z
+                                );
+                                cityGroup.add(core);
+
+                                // Facade orientation (points roughly toward track)
+                                const facadeDir = norm.clone().multiplyScalar(-side).normalize();
+                                const facadeOffset = facadeDir.clone().multiplyScalar(width * 0.55);
+
+                                const zAxis = facadeDir;
+                                const yAxis = new THREE.Vector3(0, 1, 0);
+                                const xAxis = new THREE.Vector3().crossVectors(yAxis, zAxis).normalize();
+                                yAxis.crossVectors(zAxis, xAxis).normalize();
+                                const orientMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+                                const orientQuat = new THREE.Quaternion().setFromRotationMatrix(orientMat);
+
+                                // Windows
+                                for (let band = 0; band < 3; band++) {
+                                    const wy = centerPos.y + height * (0.3 + band * 0.18);
+                                    const windows = new THREE.Mesh(windowPlaneGeo, windowMat);
+                                    windows.scale.set(width * 0.95, height * 0.07, 1);
+                                    windows.position.copy(centerPos)
+                                        .add(facadeOffset)
+                                        .setY(wy);
+                                    windows.quaternion.copy(orientQuat);
+                                    cityGroup.add(windows);
+                                }
+
+                                // Top light band
+                                const topLight = new THREE.Mesh(lightBandGeo, lightBandMat);
+                                topLight.scale.set(width * 0.95, height * 0.05, 1);
+                                topLight.position.copy(centerPos)
+                                    .add(facadeOffset)
+                                    .setY(centerPos.y + height * 0.9);
+                                topLight.quaternion.copy(orientQuat);
+                                cityGroup.add(topLight);
+
+                                // Roof
+                                const roof = new THREE.Mesh(baseCubeGeo, roofMat);
+                                roof.scale.set(width * 0.6, height * 0.08, depth * 0.6);
+                                roof.position.set(
+                                    centerPos.x,
+                                    centerPos.y + height + (roof.scale.y / 2),
+                                    centerPos.z
+                                );
+                                cityGroup.add(roof);
+
+                                // Rooftop billboard
+                                if (ring === 0 && Math.random() < 0.25) {
+                                    const bb = new THREE.Mesh(
+                                        billboardGeo,
+                                        billboardMats[Math.floor(Math.random() * billboardMats.length)]
+                                    );
+                                    bb.position.set(
+                                        centerPos.x,
+                                        centerPos.y + height + 6,
+                                        centerPos.z
+                                    );
+                                    bb.rotation.y = Math.atan2(tan.x, tan.z);
+                                    cityGroup.add(bb);
+                                }
+                            }
+                        }
+
+                        // Side roads parallel to main track, outside building belts
+                        const sideRoadSegments = citySettings.sideRoadSegments || 70;
+                        // NEW: extra side-road gap for Obsidian
+                        const sideRoadExtraGap = isObsidian ? 25 : 0;
+                        const sideRoadOffset   =
+                            (roadWidth / 2) + trackClearance + sideRoadExtraGap + radialWidth * ringsPerSide + 12;
+
+                        for (let i = 0; i < sideRoadSegments; i++) {
+                            const t0 = i / sideRoadSegments;
+                            const t1 = (i + 1) / sideRoadSegments;
+                            const p0 = curve.getPointAt(t0);
+                            const p1 = curve.getPointAt(t1);
+                            const tan = curve.getTangentAt(t0).normalize();
+                            const norm = new THREE.Vector3().crossVectors(up, tan).normalize();
+                            const segLen = p0.distanceTo(p1) || 1;
+
+                            for (const side of [-1, 1]) {
+                                const center = p0.clone()
+                                    .addScaledVector(norm, side * sideRoadOffset)
+                                    .addScaledVector(tan, segLen * 0.5);
+
+                                // Also clear side roads from inner “hole” for special tracks
+                                if (innerHoleRadiusSq > 0) {
+                                    const r2 = center.x * center.x + center.z * center.z;
+                                    if (r2 < innerHoleRadiusSq) continue;
+                                }
+
+                                const road = new THREE.Mesh(baseRoadGeo, roadMat);
+                                road.scale.set(14, segLen * 1.05, 1);
+                                road.position.set(center.x, center.y + 0.02, center.z);
+
+                                const quat = new THREE.Quaternion();
+                                const m = new THREE.Matrix4().makeBasis(
+                                    norm.clone(),  // x
+                                    up.clone(),    // y
+                                    tan.clone()    // z
+                                );
+                                quat.setFromRotationMatrix(m);
+                                road.quaternion.copy(quat);
+                                cityGroup.add(road);
+                            }
+                        }
+
+                        // Streetlights (unchanged, still just off the rails)
+                        // ...existing streetlight + optional trees code...
+                    }
+
+                    // NEW: register all city meshes for front/back culling
+                    cityGroup.traverse(obj => {
+                        if (obj.isMesh) cityDecorations.push(obj);
+                    });
+                }
+                addCity();
+
+                // --- PRECOMPUTE RAIL SEGMENTS & SEG-DIST HELPER ---
+                // build segment lists once for faster, stable collision checks
+                const railLSegs = [], railRSegs = [];
+                for (let i = 0, lenp = railLPoints.length; i < lenp; i++) {
+                    const aL = railLPoints[i];
+                    const bL = railLPoints[(i + 1) % lenp];
+                    railLSegs.push([aL, bL]);
+                    const aR = railRPoints[i];
+                    const bR = railRPoints[(i + 1) % lenp];
+                    railRSegs.push([aR, bR]);
+                }
+
+                // low-allocation point-to-segment distance helper using reusable vectors
+                const _ab = new THREE.Vector3(), _ap = new THREE.Vector3(), _proj = new THREE.Vector3();
+                function segDistPointToSeg(p, a, b) {
+                    _ab.subVectors(b, a);
+                    _ap.subVectors(p, a);
+                    const abLen2 = _ab.lengthSq() || 1e-9;
+                    let t = _ap.dot(_ab) / abLen2;
+                    if (t < 0) t = 0;
+                    else if (t > 1) t = 1;
+                    _proj.copy(_ab).multiplyScalar(t).add(a);
+                    return p.distanceTo(_proj);
+                }
+
+                // NEW: shared temp vectors to avoid allocations in hot loops
+                const _tmpV1 = new THREE.Vector3();
+                const _tmpV2 = new THREE.Vector3();
+                // NEW: bot-visibility helpers + thresholds
+                const _botForward = new THREE.Vector3();
+                const _botOffset  = new THREE.Vector3();
+                const BOT_BEHIND_HIDE_DISTANCE = 120;
+                const BOT_BEHIND_HIDE_DIST_SQ =
+                    BOT_BEHIND_HIDE_DISTANCE * BOT_BEHIND_HIDE_DISTANCE;
+
+                // --- GAME CONFIG (labeled player speed + HUD conversion) ---
+                const HUD_KPH_FACTOR = 80;              // 1 internal speed unit = 80 kph on HUD
+                const PLAYER_GAS_KPH = 125;             // max kph with gas only (was 100)
+                const PLAYER_BOOST_KPH = 170;           // boost top speed 150 kph
+                const PLAYER_GAS_MAX_SPEED = PLAYER_GAS_KPH / HUD_KPH_FACTOR;
+                const PLAYER_BOOST_MAX_SPEED = PLAYER_BOOST_KPH / HUD_KPH_FACTOR;
+                const DT = 1 / 60;
+                const PLAYER_RAM_KPH = 200;
+                const PLAYER_RAM_SPEED = PLAYER_RAM_KPH / HUD_KPH_FACTOR;
+                const PLAYER_RAM_COOLDOWN = 30;   // seconds
+                const RAM_DURATION = 1.0;         // seconds
+                const RAM_INVINCIBLE_DURATION = 5.0; // NEW: 5s invincibility after Ram
+
+                // --- PHYSICS & LOOP STATE ---
+                let speed = 0, angle = 0, camYaw = 0, isCrashed = false, respawnT = 0, steeringVel = 0;
+                let isLookingBack = false;
+                let playerMaxSpeedCurrent = PLAYER_GAS_MAX_SPEED;
+                const PLAYER_START_PROGRESS = 0.78;
+                const BOT_START_PROGRESS = 0.85;
+                const TOTAL_RACERS = 60;
+                const TOTAL_LAPS = 2;
+                const PLAYER_MAX_HEALTH = 300;
+                const BOT_MAX_HEALTH = 800; 
+                let progress = PLAYER_START_PROGRESS;
+                let crashVel = new THREE.Vector3();
+                let crashRotVel = new THREE.Vector3();
+                let playerExploded = false;
+                let health = PLAYER_MAX_HEALTH;
+                let lastRailHitTime = 0;
+                let countdownTime = 5;
+                let raceStarted = false;
+                let lapsCompleted = 0;
+                let lapStarted = false;
+                let raceFinished = false;
+                let raceStartTime = 0;
+                let playerFinished = false;
+                let playerFinishTimeSec = 0;
+                const trails = [], keys = { l:0, r:0, g:0, b:0, s:0 };
+                const explosions = [];
+                // flag used by cleanup to stop this game's render loop
+                let stopped = false;
+                // Ram + player ragdoll state
+                let ramActive = false;
+                let ramTimer = 0;
+                let ramCooldown = 0;
+                let playerWreckedByRam = false;
+                let playerRagMesh = null;
+                let playerRagVel = new THREE.Vector3();
+                let playerRagRotVel = new THREE.Vector3();
+                // NEW: Ram invincibility state
+                let ramInvincible = false;
+                let ramInvincibleTimer = 0;
+
+                // --- BOT RACERS (use createHoverBike for mesh) ---
+                const bots = [];
+                const botsPerRow = 5;
+
+                // per‑track bot speed tuning (slower on Obsidian Bobsled)
+                const isObsidianTrack = activeTrack.special === 'obsidian';
+
+                // Base KPH ranges (same as fast tracks)
+                const BOT_BASE_MIN_KPH        = 100;
+                const BOT_BEHIND_MIN_KPH      = 125;
+                const BOT_MAX_KPH             = 235;
+                const BOT_TRAIL_THRESHOLD_KPH = 125;
+
+                // NEW: global speed scale just for Obsidian bots
+                const BOT_SPEED_SCALE = isObsidianTrack ? 0.55 : 1.0;
+
+                const KPH_TO_CURVE_SPEED = (kph) => kph * 0.000125 * BOT_SPEED_SCALE;
+                const BOT_MIN_SPEED = KPH_TO_CURVE_SPEED(BOT_BASE_MIN_KPH);
+                const BOT_MAX_SPEED = KPH_TO_CURVE_SPEED(BOT_MAX_KPH);
+                const BOT_TRAIL_THRESHOLD_SPEED = KPH_TO_CURVE_SPEED(BOT_TRAIL_THRESHOLD_KPH);
+
+                const botNames = [
+                    'NOVA','APEX','VOLT','BLAZE','SURGE','ECHO','PULSE','FLARE','STORM','NEXUS','INFERNO','CYBER','TITAN','SHADOW','SONIC','RAZOR','PHOENIX','VENOM','QUANTUM','ECLIPSE',
+                    'DRIFT','ION','EMBER','VAPOR','RIPTIDE','ARC','GLINT','SPARK','FALCON','VIPER','ONYX','STRYKER','TURBO','FURY','MIRAGE','ORBIT','STRATUS','TORQUE','SHIFT','PRISM','BOLT','GHOST','FORGE','MANTA','VECTOR','NITRO','RIFT','DELTA','QUAKE','NIMBUS','CIRRUS','JOLT','SWIFT','KRAKEN','COMET','ASTRO','NOVA-X','BLADE','JADON','KALEB','LOGAN','KELLIE','DELVIN','BISHOP','IMPULSSE'
+                ];
+                // Shuffle names once per race so each bot gets a unique random name
+                const shuffledBotNames = botNames.slice();
+                for (let i = shuffledBotNames.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledBotNames[i], shuffledBotNames[j]] = [shuffledBotNames[j], shuffledBotNames[i]];
+                }
+
+                for (let i = 0; i < 59; i++) {
+                    const randomColor = new THREE.Color().setHSL(Math.random(), 0.7, 0.5);
+                    const row = Math.floor(i / botsPerRow);
+                    const col = i % botsPerRow;
+
+                    const botName = shuffledBotNames[i] || `BOT-${i + 1}`;
+
+                    bots.push({
+                        name: botName,
+                        id: i,
+                        progress: 0.85 - (row * 0.01),
+                        baseSpeed: BOT_MAX_SPEED,
+                        minSpeed: BOT_MIN_SPEED,
+                        maxSpeed: BOT_MAX_SPEED,
+                        currentSpeed: BOT_MIN_SPEED,
+                        targetSpeed: BOT_MIN_SPEED + Math.random() * (BOT_MAX_SPEED - BOT_MIN_SPEED),
+                        speedChangeTimer: 0,
+                        speedChangeInterval: 180 + Math.random() * 240,
+                        angle: 0,
+                        steeringVel: 0,
+                        lateralOffset: (col - 2) * 12,
+                        lateralVelocity: 0,
+                        color: randomColor,
+                        health: BOT_MAX_HEALTH,
+                        steeringTimer: Math.random() * 100,
+                        steeringChangeInterval: 50 + Math.random() * 80,
+                        steeringDirection: Math.random() > 0.5 ? 1 : -1,
+                        steeringStrength: 0.004 + Math.random() * 0.008,
+                        steeringDamping: 0.85 + Math.random() * 0.1,
+                        accelerationRate: 0.0004 + Math.random() * 0.0004,
+                        collisionRadius: 2.0,
+                        lastBotCollisionTime: 0,
+                        crashed: false,
+                        crashTimer: 0,
+                        crashVel: new THREE.Vector3(),
+                        crashRotVel: new THREE.Vector3(),
+                        exploded: false,
+                        lastProgress: 0,
+                        lapsCompleted: 0,
+                        lapStarted: false,
+                        finished: false,
+                        raceTime: null,
+                        // Ram & wreck state
+                        ramActive: false,
+                        ramTimer: 0,
+                        nextRamAtSec: 30 + Math.random() * 30,  // first Ram between 30–60s
+                        ramInvincible: false,                    // NEW: per‑bot Ram invincibility
+                        ramInvincibleTimer: 0,
+                        isWrecked: false,
+                        wreckTimer: 0,
+                        wreckBikeVel: new THREE.Vector3(),
+                        wreckBikeRotVel: new THREE.Vector3(),
+                        wreckRiderVel: new THREE.Vector3(),
+                        wreckRiderRotVel: new THREE.Vector3(),
+                        wreckRiderMesh: null,
+                        healthBarMesh: (() => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 200;
+                            canvas.height = 40;
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                            ctx.fillRect(0, 10, 200, 20);
+                            ctx.fillStyle = '#00ff00';
+                            ctx.fillRect(2, 12, 196, 16);
+                            const texture = new THREE.CanvasTexture(canvas);
+                            const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+                            const geometry = new THREE.PlaneGeometry(4, 0.8);
+                            const healthBar = new THREE.Mesh(geometry, material);
+                            healthBar.position.y = 5;
+                            healthBar.userData.canvas = canvas;
+                            healthBar.userData.ctx = ctx;
+                            scene.add(healthBar);
+                            return healthBar;
+                        })(),
+                        mesh: (() => {
+                            const riderPrimary = randomColor.getHex();
+                            const riderSecondary = randomColor.clone().offsetHSL(0.05, -0.1, 0.05).getHex();
+                            const riderBase = 0x111111;
+                            const botBike = createHoverBike(riderPrimary, riderSecondary, riderBase);
+                            scene.add(botBike);
+                            return botBike;
+                        })()
+                    });
+                }
+
+                // NEW: dev stats state (toggled by "F")
+                let devStatsVisible = false;
+                let devStatsEl = null;
+                let lastFrameTime = performance.now();
+                let fps = 0;
+                let devStatsFrozen = false; // NEW: pause FPS/coords tracking
+
+                // NEW: frame pacing for ~60 FPS
+                const TARGET_FPS = 60;
+                const FRAME_DURATION = 1000 / TARGET_FPS;
+                let lastFrameTick = performance.now();
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.repeat) return;
+                    switch (e.key) {
+                        case 'ArrowLeft': keys.l = 1; e.preventDefault(); break;
+                        case 'ArrowRight': keys.r = 1; e.preventDefault(); break;
+                        case 'ArrowUp': keys.g = 1; e.preventDefault(); break;
+                        case 'ArrowDown': keys.s = 1; e.preventDefault(); break;
+                        case ' ': keys.b = 1; e.preventDefault(); break;
+                        case 'b':
+                        case 'B':
+                            isLookingBack = true;
+                            e.preventDefault();
+                            break;
+                        case 'v':
+                        case 'V':
+                            // Trigger player Ram if ready
+                            if (!ramActive && ramCooldown <= 0 && raceStarted && !isCrashed && !playerFinished) {
+                                ramActive = true;
+                                ramTimer = RAM_DURATION;
+                                // NEW: start 5s invincibility window
+                                ramInvincible = true;
+                                ramInvincibleTimer = RAM_INVINCIBLE_DURATION;
+                            }
+                            e.preventDefault();
+                            break;
+                        case 'p':
+                        case 'P':
+                            paused = !paused;
+                            document.getElementById('pause-menu').style.display = paused ? 'flex' : 'none';
+                            e.preventDefault();
+                            break;
+                        case 'r':
+                        case 'R': reset(); break;
+                        // NEW: toggle dev stats
+                        case 'f':
+                        case 'F':
+                            devStatsVisible = !devStatsVisible;
+                            if (devStatsEl) {
+                                devStatsEl.style.display = devStatsVisible ? 'block' : 'none';
+                            }
+                            e.preventDefault();
+                            break;
+                        case 'e':
+                        case 'E':
+                            devStatsFrozen = !devStatsFrozen; // NEW: toggle freeze
+                            e.preventDefault();
+                            break;
+                    }
+                });
+                document.addEventListener('keyup', (e) => {
+                    switch (e.key) {
+                        case 'ArrowLeft': keys.l = 0; break;
+                        case 'ArrowRight': keys.r = 0; break;
+                        case 'ArrowUp': keys.g = 0; break;
+                        case 'ArrowDown': keys.s = 0; break;
+                        case ' ': keys.b = 0; break;
+                        case 'b':
+                        case 'B':
+                            isLookingBack = false;
+                            break;
+                        case 'v':
+                        case 'V':
+                            // Ram runs for fixed duration; no action on keyup
+                            break;
+                    }
+                });
+
+                // --- BOOST BAR (player) ---
+                const BOOST_MAX = 300;
+                let boostAmount = BOOST_MAX;
+                const boostBarContainer = document.createElement('div');
+                boostBarContainer.id = 'boost-bar-container';
+                boostBarContainer.style.cssText =
+                    'position: absolute; bottom: 20px; left: 20px; width: 200px; height: 20px; ' +
+                    'background: rgba(0,0,0,0.5); border: 2px solid #f0f; border-radius: 5px; z-index: 30;';
+                const boostBar = document.createElement('div');
+                boostBar.style.cssText =
+                    'width: 100%; height: 100%; background: linear-gradient(90deg, #f0f, #ff00ff); border-radius: 3px;';
+                boostBarContainer.appendChild(boostBar);
+                document.getElementById('game-container').appendChild(boostBarContainer);
+                
+               // Ram HUD status above boost bar
+               const ramStatusEl = document.createElement('div');
+               ramStatusEl.id = 'ram-status';
+               ramStatusEl.style.cssText =
+                   'position:absolute; bottom:46px; left:20px; color:#0f0; font-size:14px;' +
+                   'font-weight:bold; text-shadow:0 0 8px #00ff00; z-index:30;';
+               ramStatusEl.textContent = 'RAM READY';
+               document.getElementById('game-container').appendChild(ramStatusEl);
+
+                const raceTimeEl = document.getElementById('race-time');
+
+                // NEW: dev stats overlay element (initially hidden)
+                if (!devStatsEl) {
+                    devStatsEl = document.createElement('div');
+                    devStatsEl.id = 'dev-stats';
+                    devStatsEl.style.cssText =
+                        'position:absolute; top:80px; left:20px; padding:8px 10px; max-width:260px;' +
+                        'background:rgba(0,0,0,0.7); border:1px solid #0ff; border-radius:6px;' +
+                        'font-size:11px; font-family:Consolas,monospace; color:#0ff; z-index:40;' +
+                        'white-space:pre; pointer-events:none; display:none;';
+                    document.getElementById('game-container').appendChild(devStatsEl);
+                }
+
+                // NEW: root element for touch controls in this game instance
+                let touchControlsRoot = null;
+
+                // NEW: build mobile touch controls if enabled on main menu
+                function setupMobileControls() {
+                    if (!mobileControlsEnabled) return;          // global flag from settings button
+                    if (touchControlsRoot) return;               // already created for this game
+
+                    const root = document.createElement('div');
+                    root.id = 'touch-controls-root';
+                    root.style.cssText =
+                        'position:absolute; inset:0; pointer-events:none; z-index:50;';
+
+                    // LEFT/RIGHT cluster (bottom-left)
+                    const leftCluster = document.createElement('div');
+                    leftCluster.style.cssText =
+                        'position:absolute; left:20px; bottom:20px; display:flex; gap:18px; pointer-events:auto;';
+                    const btnLeft = document.createElement('div');
+                    btnLeft.className = 'btn btn-dir';
+                    btnLeft.textContent = '◄';
+                    const btnRight = document.createElement('div');
+                    btnRight.className = 'btn btn-dir';
+                    btnRight.textContent = '►';
+                    leftCluster.appendChild(btnLeft);
+                    leftCluster.appendChild(btnRight);
+
+                    // GAS / BRAKE / BOOST cluster (bottom-right)
+                    const rightCluster = document.createElement('div');
+                    rightCluster.style.cssText =
+                        'position:absolute; right:20px; bottom:20px; display:flex; flex-direction:column; gap:14px; pointer-events:auto;';
+                    const btnGas = document.createElement('div');
+                    btnGas.className = 'btn btn-gas';
+                    btnGas.textContent = 'GAS';
+                    const btnBrake = document.createElement('div');
+                    btnBrake.className = 'btn btn-brake';
+                    btnBrake.textContent = 'BRAKE';
+                    const btnBoost = document.createElement('div');
+                    btnBoost.className = 'btn btn-boost';
+                    btnBoost.textContent = 'BOOST';
+                    rightCluster.appendChild(btnGas);
+                    rightCluster.appendChild(btnBrake);
+                    rightCluster.appendChild(btnBoost);
+
+                    root.appendChild(leftCluster);
+                    root.appendChild(rightCluster);
+                    gameContainerEl.appendChild(root);
+                    touchControlsRoot = root;
+
+                    function bindTouch(btn, onDown, onUp) {
+                        btn.addEventListener('touchstart', e => { e.preventDefault(); onDown(); }, { passive: false });
+                        btn.addEventListener('touchend',   e => { e.preventDefault(); onUp(); },   { passive: false });
+                        btn.addEventListener('touchcancel',e => { e.preventDefault(); onUp(); },   { passive: false });
+                    }
+
+                    // Hook into existing key state used by gameplay
+                    bindTouch(btnLeft,  () => { keys.l = 1; }, () => { keys.l = 0; });
+                    bindTouch(btnRight, () => { keys.r = 1; }, () => { keys.r = 0; });
+                    bindTouch(btnGas,   () => { keys.g = 1; }, () => { keys.g = 0; });
+                    bindTouch(btnBrake, () => { keys.s = 1; }, () => { keys.s = 0; });
+                    bindTouch(btnBoost, () => { keys.b = 1; }, () => { keys.b = 0; });
+                }
+
+                // NEW: create mobile controls once when the game starts
+                setupMobileControls();
+
+                // --- PAUSE / MENU ---
+                let paused = false;
+                const pauseMenu = document.getElementById('pause-menu');
+                const resumeBtn = document.getElementById('pause-resume');
+                const restartBtn = document.getElementById('pause-restart');
+                const quitBtn = document.getElementById('pause-quit');
+
+                resumeBtn.addEventListener('click', () => {
+                    paused = false;
+                    pauseMenu.style.display = 'none';
+                });
+                // RESTART: use in-game reset instead of reloading the page
+                restartBtn.addEventListener('click', () => {
+                    paused = false;
+                    pauseMenu.style.display = 'none';
+                    reset();
+                });
+                quitBtn.addEventListener('click', () => {
+                    paused = false;
+                    pauseMenu.style.display = 'none';
+                    // fully stop current game when quitting to main menu
+                    if (currentStopGame) {
+                        currentStopGame();
+                        currentStopGame = null;
+                    }
+                    document.getElementById('main-menu').style.display = 'flex';
+                    document.getElementById('game-container').style.display = 'none';
+                });
+
+                // --- MINIMAP HUD (canvas overlay) ---
+                const miniMapCanvas = document.createElement('canvas');
+                miniMapCanvas.id = 'mini-map-canvas';
+                miniMapCanvas.width = 150;
+                miniMapCanvas.height = 150;
+                miniMapCanvas.style.cssText =
+                    'position:absolute; bottom:20px; right:20px; width:150px; height:150px;' +
+                    'background:rgba(0,0,0,0.6); border:2px solid #0ff; border-radius:8px; z-index:35;';
+                const miniMapCtx = miniMapCanvas.getContext('2d');
+                document.getElementById('game-container').appendChild(miniMapCanvas);
+                let miniMapFrameSkip = 0; // NEW: draw minimap every other frame
+                let cityCullFrameSkip = 0; // NEW: update city visibility every other frame
+                let botCullFrameSkip  = 0; // NEW: update bot visibility every other frame
+
+                function drawMiniMap() {
+                    const w = miniMapCanvas.width;
+                    const h = miniMapCanvas.height;
+                    const pad = 8;
+
+                    miniMapCtx.clearRect(0, 0, w, h);
+
+                    const sx = (w - 2 * pad) / ((worldMaxX - worldMinX) || 1);
+                    const sz = (h - 2 * pad) / ((worldMaxZ - worldMinZ) || 1);
+                    const scale = Math.min(sx, sz);
+
+                    function toMap(x, z) {
+                        const mapX = (x - worldMinX) * scale + pad;
+                        const mapZ = (z - worldMinZ) * scale + pad;
+                        // flip horizontally only (mirror X), keep Y as before
+                        return { x: w - mapX, y: h - mapZ };
+                    }
+
+                    // Track polyline
+                    miniMapCtx.strokeStyle = 'rgba(0,255,255,0.5)';
+                    miniMapCtx.lineWidth = 2;
+                    miniMapCtx.beginPath();
+                    trackPoints.forEach((pt, idx) => {
+                        const m = toMap(pt.x, pt.z);
+                        if (idx === 0) miniMapCtx.moveTo(m.x, m.y);
+                        else miniMapCtx.lineTo(m.x, m.y);
+                    });
+                    miniMapCtx.closePath();
+                    miniMapCtx.stroke();
+
+                    // Finish line marker (same for all tracks): small checkered square
+                    const startPt = curve.getPointAt(0);
+                    const sm = toMap(startPt.x, startPt.z);
+                    const fs = 6;
+                    miniMapCtx.fillStyle = '#ffffff';
+                    miniMapCtx.fillRect(sm.x - fs/2, sm.y - fs/2, fs, fs);
+                    miniMapCtx.strokeStyle = '#000000';
+                    miniMapCtx.lineWidth = 1;
+                    miniMapCtx.strokeRect(sm.x - fs/2, sm.y - fs/2, fs, fs);
+
+                    // Bots & player dots
+                    miniMapCtx.fillStyle = 'rgba(255,255,255,0.85)';
+                    for (const bot of bots) {
+                        if (bot._remove) continue;
+                        const bp = bot.mesh.position;
+                        const m = toMap(bp.x, bp.z);
+                        miniMapCtx.beginPath();
+                        miniMapCtx.arc(m.x, m.y, 2, 0, Math.PI * 2);
+                        miniMapCtx.fill();
+                    }
+
+                    // Player
+                    const mp = toMap(bike.position.x, bike.position.z);
+                    miniMapCtx.fillStyle = '#ff00ff';
+                    miniMapCtx.beginPath();
+                    miniMapCtx.arc(mp.x, mp.y, 3.5, 0, Math.PI * 2);
+                    miniMapCtx.fill();
+                }
+
+                // --- BOOST TRAIL SHARED GEOMETRY/MATERIAL ---
+                const trailGeometry = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+                function spawnTrailAt(pos, color = 0xf0f) {
+                    const mat = new THREE.MeshBasicMaterial({
+                        color,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+                    const m = new THREE.Mesh(trailGeometry, mat);
+                    m.position.copy(pos).y -= 1;
+                    scene.add(m);
+                    trails.push({ m, life: 1.0 });
+                }
+
+                function spawnExplosion(pos, color = 0xff6600) {
+                    const geom = new THREE.SphereGeometry(0.6, 10, 10);
+                    for (let i = 0; i < 12; i++) {
+                        const mat = new THREE.MeshBasicMaterial({color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending});
+                        const m = new THREE.Mesh(geom, mat);
+                        m.position.copy(pos);
+                        const v = new THREE.Vector3((Math.random()-0.5)*0.8, Math.random()*1.2, (Math.random()-0.5)*0.8);
+                        scene.add(m);
+                        explosions.push({m, v, life: 1});
+                    }
+                }
+
+                 function triggerBotCrash(bot, dir, strength = 1.4) {
+                     // Only crash / launch bots that are already dead
+                     if (bot.crashed || bot.health > 0) return;
+
+                     bot.crashed = true;
+                     bot.crashTimer = 3.0; // longer crash duration
+                     bot.currentSpeed = 0;
+                     bot.crashVel.copy(dir).setLength(strength * 1.3).add(new THREE.Vector3(0, 0.9, 0)); // more upward force
+                     bot.crashRotVel.set(
+                         (Math.random() - 0.5) * 0.35,
+                         (Math.random() - 0.5) * 0.6,
+                         (Math.random() - 0.5) * 0.35
+                    );
+                    if (!bot.exploded && bot.health <= 0) {
+                        bot.exploded = true;
+                        spawnExplosion(bot.mesh.position, bot.color.getHex());
+                    }
+                 }
+ 
+                 function triggerPlayerCrash(dir, strength = 1.6) {
+                     if (ramInvincible) return; // ignore crashes while invincible
+                     if (isCrashed) return;
+                     isCrashed = true;
+                     respawnT = 4; // longer before respawn
+                     crashVel.copy(dir).setLength(strength * 1.4).add(new THREE.Vector3(0, 1.2, 0)); // more powerful crash
+                     crashRotVel.set(
+                         (Math.random() - 0.5) * 0.4,
+                         (Math.random() - 0.5) * 0.7,
+                         (Math.random() - 0.5) * 0.4
+                    );
+                    if (!playerExploded && health <= 0) {
+                        playerExploded = true;
+                        spawnExplosion(bike.position, 0xff00ff);
+                    }
+                 }
+ 
+                 function wreckBotFromRam(bot, dir) {
+                   if (bot.isWrecked || bot.crashed) return;
+
+                   // subtract 200 health on each wreck event
+                   bot.health = Math.max(0, bot.health - 200);
+
+                   bot.isWrecked = true;
+                   bot.wreckTimer = 5.0;
+                   bot.ramActive = false;
+                   bot.ramTimer = 0;
+                   bot.currentSpeed = 0;
+ 
+                   bot.wreckBikeVel.copy(dir).setLength(1.8).add(new THREE.Vector3(0, 1.6, 0));
+                   bot.wreckBikeRotVel.set(
+                       (Math.random() - 0.5) * 0.5,
+                       (Math.random() - 0.5) * 0.8,
+                       (Math.random() - 0.5) * 0.5
+                   );
+ 
+                   if (bot.wreckRiderMesh) {
+                       scene.remove(bot.wreckRiderMesh);
+                       bot.wreckRiderMesh = null;
+                   }
+                   const riderGeom = new THREE.BoxGeometry(1, 2, 0.6);
+                   const riderMat = new THREE.MeshBasicMaterial({ color: bot.color.getHex() });
+                   const riderMesh = new THREE.Mesh(riderGeom, riderMat);
+                   riderMesh.position.copy(bot.mesh.position).add(new THREE.Vector3(0, 1.5, 0));
+                   scene.add(riderMesh);
+                   bot.wreckRiderMesh = riderMesh;
+                   bot.wreckRiderVel.copy(dir).setLength(2.2).add(new THREE.Vector3(0, 2.0, 0));
+                   bot.wreckRiderRotVel.set(
+                       (Math.random() - 0.5) * 0.8,
+                       (Math.random() - 0.5) * 1.0,
+                       (Math.random() - 0.5) * 0.8
+                   );
+                 }
+ 
+                 function updateBotWreck(bot) {
+                   if (!bot.isWrecked) return;
+                   bot.wreckTimer -= DT;
+
+                   const basePt = curve.getPointAt(bot.progress);
+                   const floorY = basePt.y + 1.0;
+
+                   // bike physics
+                   bot.wreckBikeVel.y -= 0.08;
+                   bot.mesh.position.add(bot.wreckBikeVel);
+                   bot.mesh.rotation.x += bot.wreckBikeRotVel.x;
+                   bot.mesh.rotation.y += bot.wreckBikeRotVel.y;
+                   bot.mesh.rotation.z += bot.wreckBikeRotVel.z;
+                   bot.wreckBikeVel.multiplyScalar(0.95);
+                   bot.wreckBikeRotVel.multiplyScalar(0.95);
+                   if (bot.mesh.position.y < floorY) {
+                     bot.mesh.position.y = floorY;
+                     bot.wreckBikeVel.y *= -0.3;
+                   }
+ 
+                   // rider physics
+                   if (bot.wreckRiderMesh) {
+                     const riderFloor = floorY + 0.5;
+                     bot.wreckRiderVel.y -= 0.08;
+                     bot.wreckRiderMesh.position.add(bot.wreckRiderVel);
+                     bot.wreckRiderMesh.rotation.x += bot.wreckRiderRotVel.x;
+                     bot.wreckRiderMesh.rotation.y += bot.wreckRiderRotVel.y;
+                     bot.wreckRiderMesh.rotation.z += bot.wreckRiderRotVel.z;
+                     bot.wreckRiderVel.multiplyScalar(0.95);
+                     bot.wreckRiderRotVel.multiplyScalar(0.95);
+                     if (bot.wreckRiderMesh.position.y < riderFloor) {
+                         bot.wreckRiderMesh.position.y = riderFloor;
+                         bot.wreckRiderVel.y *= -0.3;
+                     }
+                   }
+ 
+                   if (bot.wreckTimer <= 0) {
+                     // remove rider ragdoll
+                     if (bot.wreckRiderMesh) {
+                         scene.remove(bot.wreckRiderMesh);
+                         bot.wreckRiderMesh = null;
+                     }
+                     // respawn bot on track at its current progress
+                     const pt = curve.getPointAt(bot.progress);
+                     const tan = curve.getTangentAt(bot.progress);
+                     const norm = new THREE.Vector3(0, 1, 0).cross(tan).normalize();
+                     const offsetPos = pt.clone().addScaledVector(norm, bot.lateralOffset);
+                     bot.mesh.position.copy(offsetPos).y = pt.y + 2;
+                     bot.mesh.rotation.set(0, Math.atan2(tan.x, tan.z) + Math.PI, 0);
+
+                     bot.currentSpeed = BOT_MIN_SPEED;
+                     // DO NOT restore health here so wreck damage persists
+                     // bot.health = BOT_MAX_HEALTH;
+                     bot.isWrecked = false;
+                   }
+                 }
+ 
+                 // Ram wreck: player – bike uses existing crash path, extra ragdoll
+                 function wreckPlayerFromRam(dir) {
+                   if (ramInvincible) return; // ignore Ram-wreck while invincible
+                   if (playerWreckedByRam || isCrashed) return;
+                   // take 25% of max health on Ram hit
+                   health = Math.max(0, health - PLAYER_MAX_HEALTH * 0.25);
+                   playerWreckedByRam = true;
+                   isCrashed = true;
+                   respawnT = 5.0;
+                   crashVel.copy(dir).setLength(2.0).add(new THREE.Vector3(0, 1.8, 0));
+                   crashRotVel.set(
+                       (Math.random() - 0.5) * 0.5,
+                       (Math.random() - 0.5) * 0.8,
+                       (Math.random() - 0.5) * 0.5
+                   );
+                   if (playerRagMesh) {
+                       scene.remove(playerRagMesh);
+                       playerRagMesh = null;
+                   }
+                   const riderGeom = new THREE.BoxGeometry(1, 2, 0.6);
+                   const riderMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                   playerRagMesh = new THREE.Mesh(riderGeom, riderMat);
+                   playerRagMesh.position.copy(bike.position).add(new THREE.Vector3(0, 1.5, 0));
+                   scene.add(playerRagMesh);
+                   playerRagVel.copy(dir).setLength(2.4).add(new THREE.Vector3(0, 2.2, 0));
+                   playerRagRotVel.set(
+                       (Math.random() - 0.5) * 0.8,
+                       (Math.random() - 0.5) * 1.0,
+                       (Math.random() - 0.5) * 0.8
+                   );
+                   // stop player Ram and start cooldown
+                   ramActive = false;
+                   ramTimer = 0;
+                   ramCooldown = PLAYER_RAM_COOLDOWN;
+                 }
+
+                // Respawn the player after being Ram‑wrecked, without restarting the race
+                function respawnFromRam() {
+                    playerWreckedByRam = false;
+                    isCrashed = false;
+                    respawnT = 0;
+                    crashVel.set(0, 0, 0);
+                    crashRotVel.set(0, 0, 0);
+                    if (playerRagMesh) {
+                        scene.remove(playerRagMesh);
+                        playerRagMesh = null;
+                    }
+                    playerRagVel.set(0, 0, 0);
+                    playerRagRotVel.set(0, 0, 0);
+
+                    const pt = curve.getPointAt(progress);
+                    const tan = curve.getTangentAt(progress);
+                    bike.position.copy(pt);
+                    bike.position.y = pt.y + 1.5;
+                    angle = Math.atan2(tan.x, tan.z);
+                    bike.rotation.set(0, angle + Math.PI, 0);
+
+                    crashOverlayEl.style.display = 'none';
+                }
+
+                function reset() {
+                    isCrashed = false; speed = 0; steeringVel = 0; progress = PLAYER_START_PROGRESS;
+                    crashVel.set(0,0,0); crashRotVel.set(0,0,0);
+                    playerExploded = false;
+                    health = PLAYER_MAX_HEALTH;
+                    boostAmount = BOOST_MAX;
+                    playerMaxSpeedCurrent = PLAYER_GAS_MAX_SPEED;
+                    countdownTime = 5;
+                    raceStarted = false;
+                    lapsCompleted = 0;
+                    lapStarted = false;
+                    raceFinished = false;
+                    raceStartTime = 0;
+                    playerFinished = false;
+                    playerFinishTimeSec = 0;
+                    ramActive = false;
+                    ramTimer = 0;
+                    ramCooldown = 0;
+                    playerWreckedByRam = false;
+                    if (playerRagMesh) {
+                        scene.remove(playerRagMesh);
+                        playerRagMesh = null;
+                    }
+                    ramInvincible = false;
+                    ramInvincibleTimer = 0;
+                    raceTimeEl.style.display = 'none';
+                    raceTimeEl.innerText = 'TIME 0.00s';
+                    document.getElementById('lap-display').style.display = 'none';
+                    document.getElementById('finish-menu').style.display = 'none';
+
+                    for (let i = 0; i < bots.length; i++) {
+                        const row = Math.floor(i / botsPerRow);
+                        const col = i % botsPerRow;
+                        const bot = bots[i];
+
+                        bot.progress = BOT_START_PROGRESS - (row * 0.01);
+
+                        // core bot stats
+                        bot.minSpeed = BOT_MIN_SPEED;
+                        bot.maxSpeed = BOT_MAX_SPEED;
+                        bot.currentSpeed = BOT_MIN_SPEED;
+                        bot.targetSpeed = BOT_MIN_SPEED + Math.random() * (BOT_MAX_SPEED - BOT_MIN_SPEED);
+                        bot.speedChangeTimer = 0;
+                        bot.speedChangeInterval = 180 + Math.random() * 240;
+                        bot.baseSpeed = bot.maxSpeed;
+                        bot.steeringVel = 0;
+                        bot.lateralOffset = (col - 2) * 12;
+                        bot.steeringTimer = Math.random() * 100;
+                        bot.steeringDirection = Math.random() > 0.5 ? 1 : -1;
+                        bot.health = BOT_MAX_HEALTH;
+                        bot.crashed = false;
+                        bot.crashTimer = 0;
+                        bot.crashVel.set(0,0,0);
+                        bot.crashRotVel.set(0,0,0);
+                        bot.exploded = false;
+                        bot.lastProgress = 0;
+                        bot.lapsCompleted = 0;
+                        bot.lapStarted = false;
+                        bot.finished = false;
+                        bot.raceTime = null;
+
+                        // clear wreck state
+                        if (bot.wreckRiderMesh) {
+                            scene.remove(bot.wreckRiderMesh);
+                            bot.wreckRiderMesh = null;
+                        }
+                        bot.isWrecked = false;
+                        bot.wreckTimer = 0;
+                        bot.wreckBikeVel.set(0, 0, 0);
+                        bot.wreckBikeRotVel.set(0, 0, 0);
+                        bot.wreckRiderVel.set(0, 0, 0);
+                        bot.wreckRiderRotVel.set(0, 0, 0);
+
+                        // NEW: fully reset Ram state for each bot every race
+                        bot.ramActive = false;
+                        bot.ramTimer = 0;
+                        bot.nextRamAtSec = 30 + Math.random() * 30; // reschedule first Ram
+                        bot.ramInvincible = false;
+                        bot.ramInvincibleTimer = 0;
+
+                        // RECREATE MESH IF REMOVED, AND FACE FORWARD/UP
+                        if (!bot.mesh || bot._remove) {
+                            const riderPrimary = bot.color.getHex();
+                            const riderSecondary = bot.color.clone().offsetHSL(0.05, -0.1, 0.05).getHex();
+                            const riderBase = 0x111111;
+                            const botBike = createHoverBike(riderPrimary, riderSecondary, riderBase);
+                            scene.add(botBike);
+                            bot.mesh = botBike;
+                        }
+                        bot._remove = false;
+
+                        // RECREATE HEALTH BAR IF MISSING
+                        if (!bot.healthBarMesh) {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 200;
+                            canvas.height = 40;
+                            const ctx = canvas.getContext('2d');
+                            const texture = new THREE.CanvasTexture(canvas);
+                            const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+                            const geometry = new THREE.PlaneGeometry(4, 0.8);
+                            const healthBar = new THREE.Mesh(geometry, material);
+                            healthBar.position.y = 5;
+                            healthBar.userData.canvas = canvas;
+                            healthBar.userData.ctx = ctx;
+                            scene.add(healthBar);
+                            bot.healthBarMesh = healthBar;
+                        }
+
+                        // POSITION BOT ON TRACK, FACING FORWARD & UPRIGHT
+                        const botPt = curve.getPointAt(bot.progress);
+                        const botTan = curve.getTangentAt(bot.progress);
+                        const botNorm = new THREE.Vector3(0, 1, 0).cross(botTan).normalize();
+                        const offsetPos = botPt.clone().addScaledVector(botNorm, bot.lateralOffset);
+                        bot.mesh.position.copy(offsetPos);
+                        bot.mesh.position.y = botPt.y + 2;
+                        bot.mesh.rotation.set(0, Math.atan2(botTan.x, botTan.z) + Math.PI, 0);
+                    }
+
+                    const p = curve.getPointAt(progress);
+                    const tan = curve.getTangentAt(progress);
+                    bike.position.copy(p);
+                    bike.position.y = p.y + 1.5;
+                    angle = Math.atan2(tan.x, tan.z);
+                    camYaw = 0;
+                    bike.rotation.set(0, angle + Math.PI, 0);
+                    document.getElementById('crash-overlay').style.display = 'none';
+                    document.getElementById('countdown-display').style.display = 'block';
+                }
+                reset();
+
+                // Race finish menu listeners
+                document.getElementById('race-again').addEventListener('click', () => {
+                    // RACE AGAIN: hide finish menu and reset race state
+                    finishMenuEl.style.display = 'none';
+                    reset();
+                });
+                document.getElementById('finish-menu-btn').addEventListener('click', () => {
+                    document.getElementById('finish-menu').style.display = 'none';
+                    // also stop current game when leaving via finish screen
+                    if (currentStopGame) {
+                        currentStopGame();
+                        currentStopGame = null;
+                    }
+                    document.getElementById('main-menu').style.display = 'flex';
+                    document.getElementById('game-container').style.display = 'none';
+                });
+
+                // register cleanup for this game instance
+                currentStopGame = () => {
+                   stopped = true;
+                   // remove Three.js canvas
+                   if (renderer && renderer.domElement && renderer.domElement.parentNode) {
+                       renderer.domElement.parentNode.removeChild(renderer.domElement);
+                   }
+                   if (renderer && renderer.dispose) {
+                       renderer.dispose();
+                   }
+                   // remove HUD elements we created inside this game
+                   const oldBoost = document.getElementById('boost-bar-container');
+                   if (oldBoost && oldBoost.parentNode) oldBoost.parentNode.removeChild(oldBoost);
+                   const oldMini = document.getElementById('mini-map-canvas');
+                   if (oldMini && oldMini.parentNode) oldMini.parentNode.removeChild(oldMini);
+                   const oldRam = document.getElementById('ram-status');
+                   if (oldRam && oldRam.parentNode) oldRam.parentNode.removeChild(oldRam);
+                   const oldDev = document.getElementById('dev-stats');
+                   if (oldDev && oldDev.parentNode) oldDev.parentNode.removeChild(oldDev);
+                   // NEW: remove touch controls
+                   const oldTouch = document.getElementById('touch-controls-root');
+                   if (oldTouch && oldTouch.parentNode) oldTouch.parentNode.removeChild(oldTouch);
+                };
+
+                // CHANGED: now accepts rAF timestamp and paces to 60 FPS
+                function update(timestamp) {
+                    if (stopped) return;
+
+                    if (typeof timestamp !== 'number') {
+                        timestamp = performance.now();
+                    }
+                    const elapsedTick = timestamp - lastFrameTick;
+                    if (elapsedTick < FRAME_DURATION) {
+                        requestAnimationFrame(update);
+                        return;
+                    }
+                    lastFrameTick = timestamp;
+
+                    // NEW: real delta time in seconds for time-based logic
+                    const dt = elapsedTick / 1000;
+
+                    // NEW: FPS tracking
+                    if (!devStatsFrozen) {
+                        const now = performance.now();
+                        const dtMs = now - lastFrameTime;
+                        lastFrameTime = now;
+                        const instFps = dtMs > 0 ? 1000 / dtMs : 0;
+                        fps = fps * 0.9 + instFps * 0.1;
+                    }
+
+                    // --- PAUSE & RACE FINISH GUARD ---
+                    if (paused) {
+                        countdownDisplayEl.style.display = 'none';
+                        renderer.render(scene, camera);
+                        requestAnimationFrame(update);
+                        return;
+                    }
+                   
+                    if (raceFinished) {
+                        renderer.render(scene, camera);
+                        requestAnimationFrame(update);
+                        return;
+                    }
+
+                    // --- START COUNTDOWN ---
+                    if (!raceStarted) {
+                        countdownTime -= dt;               // CHANGED: was `DT`
+                        if (countdownTime <= 0) {
+                            raceStarted = true;
+                            raceStartTime = Date.now();
+                            countdownTime = 0;
+                            countdownDisplayEl.style.display = 'none';
+                        } else {
+                            countdownDisplayEl.innerText = Math.ceil(countdownTime);
+                            countdownDisplayEl.style.display = 'block';
+                        }
+                    }
+
+                    // Race elapsed time (for HUD and bot Ram scheduling)
+                    let raceElapsedSec = 0;
+                    if (raceStarted && raceStartTime > 0) {
+                        raceElapsedSec = (Date.now() - raceStartTime) / 1000;
+                    }
+
+                    // --- IN-RACE TIMER (PLAYER HUD) ---
+                    if (raceStarted && !playerFinished) {
+                        raceTimeEl.style.display = 'block';
+                        raceTimeEl.innerText = `TIME ${raceElapsedSec.toFixed(2)}s`;
+                    }
+
+                    // --- PLAYER RAM TIMERS + HUD ---
+                    if (ramActive) {
+                        ramTimer -= DT; // duration can stay frame-based or update similarly if desired
+                        if (ramTimer <= 0) {
+                            ramActive = false;
+                            ramCooldown = PLAYER_RAM_COOLDOWN;
+                        }
+                    } else if (ramCooldown > 0) {
+                        ramCooldown -= dt;                // CHANGED: was `DT`
+                        if (ramCooldown < 0) ramCooldown = 0;
+                    }
+                    // handle Ram invincibility timer
+                    if (ramInvincible) {
+                        ramInvincibleTimer -= DT;
+                        if (ramInvincibleTimer <= 0) {
+                            ramInvincible = false;
+                            ramInvincibleTimer = 0;
+                        }
+                    }
+                    if (ramStatusEl) {
+                        if (ramActive) {
+                            ramStatusEl.textContent = 'RAM ACTIVE';
+                            ramStatusEl.style.color = '#ffff00';
+                        } else if (ramCooldown > 0) {
+                            ramStatusEl.textContent = `RAM CD: ${ramCooldown.toFixed(1)}s`;
+                            ramStatusEl.style.color = '#ff8800';
+                        } else {
+                            ramStatusEl.textContent = 'RAM READY';
+                            ramStatusEl.style.color = '#00ff00';
+                        }
+                    }
+
+                    // Compute race distance range (leader vs last) for bot rubber-banding
+                    let minRaceDist = Infinity;
+                    let maxRaceDist = -Infinity;
+                    if (raceStarted) {
+                        const playerLapIndex = lapStarted ? (lapsCompleted + 1) : 0;
+                        const playerDist = playerLapIndex + progress;
+                        minRaceDist = Math.min(minRaceDist, playerDist);
+                        maxRaceDist = Math.max(maxRaceDist, playerDist);
+                        for (const bot of bots) {
+                            const botLapIndex = bot.lapStarted ? (bot.lapsCompleted + 1) : 0;
+                            const d = botLapIndex + bot.progress;
+                            if (d < minRaceDist) minRaceDist = d;
+                            if (d > maxRaceDist) maxRaceDist = d;
+                        }
+                    }
+                    const raceDistRange = Math.max(0.0001, maxRaceDist - minRaceDist);
+
+                    // --- BOOST BAR ENERGY LOGIC (faster recharge) ---
+                    if (raceStarted && !isCrashed) {
+                        if (keys.b && boostAmount > 0) {
+                            // keep drain as-is
+                            boostAmount -= 0.8;
+                        } else if (!keys.b) {
+                            // faster regen than before
+                            boostAmount = Math.min(boostAmount + 0.6, BOOST_MAX); // was 0.25
+                        }
+                        boostAmount = Math.max(0, boostAmount);
+                    }
+                    boostBar.style.width = (boostAmount / BOOST_MAX * 100) + '%';
+
+                    // --- BOT AI UPDATE (steering, speed, laps, collisions) ---
+                    if (raceStarted) {
+                        for (let bot of bots) {
+                           // Wrecked bots (Ram) use separate physics + respawn
+                           if (bot.isWrecked) {
+                               updateBotWreck(bot);
+                               continue;
+                           }
+                           // NEW: per‑bot Ram invincibility timer
+                           if (bot.ramInvincible) {
+                               bot.ramInvincibleTimer -= DT;
+                               if (bot.ramInvincibleTimer <= 0) {
+                                   bot.ramInvincibleTimer = 0;
+                                   bot.ramInvincible = false;
+                               }
+                           }
+
+                           if (bot.crashed) {
+                                const botPt = curve.getPointAt(bot.progress);
+                                const floorY = botPt.y + 1.0;
+                                bot.crashTimer -= 0.016;
+                                bot.crashVel.y -= 0.06; // stronger gravity
+                                bot.mesh.position.add(bot.crashVel);
+                                bot.mesh.rotation.x += bot.crashRotVel.x;
+                                bot.mesh.rotation.y += bot.crashRotVel.y;
+                                bot.mesh.rotation.z += bot.crashRotVel.z;
+                                bot.crashVel.multiplyScalar(0.91); // more damping
+                                bot.crashRotVel.multiplyScalar(0.93); // faster spin decay
+                                if (bot.mesh.position.y < floorY) {
+                                    bot.mesh.position.y = floorY;
+                                    bot.crashVel.y *= -0.25; // less bounce
+                                }
+                                if (bot.crashTimer <= 0 && bot.health <= 0) {
+                                    scene.remove(bot.mesh);
+                                    scene.remove(bot.healthBarMesh);
+                                    bot._remove = true;
+                                } else if (bot.crashTimer <= 0) {
+                                    bot.crashed = false;
+                                    bot.mesh.rotation.set(0, bot.mesh.rotation.y, 0);
+                                    bot.mesh.position.y = floorY;
+                                }
+                                continue;
+                            }
+                            const prevBotProgress = bot.lastProgress ?? bot.progress;
+
+                            // Bot Ram ability: random burst every 30–60 seconds
+                            if (raceElapsedSec > 0 && !bot.ramActive && raceElapsedSec >= bot.nextRamAtSec) {
+                                bot.ramActive = true;
+                                bot.ramTimer = RAM_DURATION;
+                                bot.nextRamAtSec = raceElapsedSec + 30 + Math.random() * 30; // 30–60s between Rams
+                                // NEW: start 5s of invincibility for this bot
+                                bot.ramInvincible = true;
+                                bot.ramInvincibleTimer = RAM_INVINCIBLE_DURATION;
+                            }
+
+                            // Bot steering AI: unique timer and direction for each
+                            bot.steeringTimer++;
+                            if (bot.steeringTimer > bot.steeringChangeInterval) {
+                                bot.steeringDirection = Math.random() > 0.5 ? 1 : -1;
+                                bot.steeringTimer = 0;
+                                bot.steeringChangeInterval = 50 + Math.random() * 80;
+                            }
+                            
+                            const steeringInput = bot.steeringDirection * bot.steeringStrength * Math.random();
+                            bot.steeringVel += steeringInput;
+                            bot.steeringVel *= bot.steeringDamping;
+                            bot.steeringVel = Math.max(-0.015, Math.min(0.015, bot.steeringVel));
+                            bot.angle += bot.steeringVel * (bot.currentSpeed + 0.5);
+                            
+                            bot.lateralVelocity += bot.steeringVel * 0.5;
+                            bot.lateralVelocity *= 0.9;
+                            bot.lateralVelocity = Math.max(-2, Math.min(2, bot.lateralVelocity));
+                            bot.lateralOffset += bot.lateralVelocity;
+                            
+                            // Dynamic speed: 100–175 kph; bots behind player use 125–175.
+                            bot.speedChangeTimer++;
+                            if (bot.speedChangeTimer > bot.speedChangeInterval) {
+                                bot.speedChangeTimer = 0;
+                                bot.speedChangeInterval = 180 + Math.random() * 240;
+
+                                const botLapIndex = bot.lapStarted ? (bot.lapsCompleted + 1) : 0;
+                                const botDist = botLapIndex + bot.progress;
+
+                                const backFactor = raceDistRange > 0
+                                    ? (maxRaceDist - botDist) / raceDistRange
+                                    : 0;
+
+                                const playerLapIndex = lapStarted ? (lapsCompleted + 1) : 0;
+                                const playerDist = playerLapIndex + progress;
+                                const isBehindPlayer = botDist < playerDist;
+
+                                const minKphForThisBot = isBehindPlayer ? BOT_BEHIND_MIN_KPH : BOT_BASE_MIN_KPH;
+
+                                const r = Math.random();
+                                const weighted = Math.min(1, r + 0.4 * Math.max(0, backFactor));
+                                const targetKph = minKphForThisBot +
+                                    (BOT_MAX_KPH - minKphForThisBot) * weighted;
+
+                                bot.targetSpeed = KPH_TO_CURVE_SPEED(targetKph);
+                            }
+
+                            const accel = bot.accelerationRate;
+                            if (bot.currentSpeed < bot.targetSpeed) {
+                                bot.currentSpeed = Math.min(bot.currentSpeed + accel, bot.maxSpeed);
+                            } else {
+                                bot.currentSpeed = Math.max(bot.currentSpeed - accel, bot.minSpeed);
+                            }
+                            // Enforce Ram burst up to max speed for bots
+                            if (bot.ramActive) {
+                                bot.ramTimer -= DT;
+                                if (bot.currentSpeed < BOT_MAX_SPEED) {
+                                    bot.currentSpeed = BOT_MAX_SPEED;
+                                }
+                                if (bot.ramTimer <= 0) {
+                                    bot.ramActive = false;
+                                }
+                            }
+
+                            bot.progress += bot.currentSpeed * 0.01;
+                            if (bot.progress > 1) bot.progress -= 1;
+                            
+                            // Bot lap / timing logic based on crossing start line
+                            const crossedStartBot = prevBotProgress > 0.9 && bot.progress < 0.1;
+                            if (crossedStartBot) {
+                                if (!bot.lapStarted) {
+                                    // First time ever crossing the line: start showing laps
+                                    bot.lapStarted = true;
+                                    bot.lapsCompleted = 0;
+                                } else {
+                                    bot.lapsCompleted++;
+                                    if (bot.lapsCompleted >= TOTAL_LAPS && !bot.finished && raceStartTime > 0) {
+                                        bot.finished = true;
+                                        bot.raceTime = (Date.now() - raceStartTime) / 1000; // seconds since race start
+                                    }
+                                }
+                            }
+                            bot.lastProgress = bot.progress;
+                            const botPt = curve.getPointAt(bot.progress);
+                            const botTan = curve.getTangentAt(bot.progress);
+                            const botNorm = new THREE.Vector3(0, 1, 0).cross(botTan).normalize();
+                            
+                            const maxBotLateralDist = (roadWidth / 2) - 3;
+                            
+                            if (Math.abs(bot.lateralOffset) > maxBotLateralDist) {
+                                bot.lateralOffset = Math.max(-maxBotLateralDist, Math.min(maxBotLateralDist, bot.lateralOffset));
+                                bot.lateralVelocity *= -0.5;
+                            }
+                            
+                            // NEW: Bot rail avoidance and damage
+                            const botRailThreshold = (roadWidth / 2) - 6;
+                            if (Math.abs(bot.lateralOffset) > botRailThreshold) {
+                                const now = Date.now();
+                                if (!bot.lastRailHitTime) bot.lastRailHitTime = 0;
+                                
+                                // Take damage if hitting rail (unless Ram‑invincible)
+                                if (
+                                    !bot.ramInvincible &&
+                                    Math.abs(bot.lateralOffset) > (roadWidth / 2) - 3 &&
+                                    now - bot.lastRailHitTime > 500
+                                ) {
+                                    bot.health -= 6;
+                                    bot.lastRailHitTime = now;
+                                }
+                                
+                                // Steer away from rail
+                                if (bot.lateralOffset > 0) {
+                                    bot.steeringDirection = -1;
+                                } else {
+                                    bot.steeringDirection = 1;
+                                }
+                            }
+                            
+
+                            const offsetPos = botPt.clone().addScaledVector(botNorm, bot.lateralOffset);
+                            bot.mesh.position.copy(offsetPos).y += 2;
+                            bot.mesh.rotation.y = Math.atan2(botTan.x, botTan.z) + Math.PI; // Always face forward
+                            bot.mesh.rotation.z = bot.steeringVel * 15;
+                        }
+                        
+                        // BOT-TO-BOT COLLISION DETECTION AND RESPONSE
+                        for (let i = 0; i < bots.length; i++) {
+                            for (let j = i + 1; j < bots.length; j++) {
+                                const botA = bots[i], botB = bots[j];
+                                const dist = botA.mesh.position.distanceTo(botB.mesh.position);
+                                const minDist = botA.collisionRadius + botB.collisionRadius;
+                                
+                                if (dist < minDist) {
+                                    const now = Date.now();
+
+                                    // Ram hits: Ram‑active bot wrecks the other, unless target is Ram‑invincible
+                                    if (
+                                        botA.ramActive && !botA.isWrecked && !botA.crashed &&
+                                        !botB.isWrecked && !botB.crashed && !botB.ramInvincible
+                                    ) {
+                                        _tmpV1.subVectors(botB.mesh.position, botA.mesh.position).normalize();
+                                        wreckBotFromRam(botB, _tmpV1);
+                                        botA.lastBotCollisionTime = now;
+                                        continue;
+                                    }
+                                    if (
+                                        botB.ramActive && !botB.isWrecked && !botB.crashed &&
+                                        !botA.isWrecked && !botA.crashed && !botA.ramInvincible
+                                    ) {
+                                        _tmpV1.subVectors(botA.mesh.position, botB.mesh.position).normalize();
+                                        wreckBotFromRam(botA, _tmpV1);
+                                        botB.lastBotCollisionTime = now;
+                                        continue;
+                                    }
+
+                                    // chain wrecks: non‑wrecked hitting a wrecked bike becomes wrecked (unless invincible)
+                                    if (botA.isWrecked && !botB.isWrecked && !botB.ramInvincible) {
+                                        _tmpV1.subVectors(botB.mesh.position, botA.mesh.position).normalize();
+                                        wreckBotFromRam(botB, _tmpV1);
+                                        continue;
+                                    }
+                                    if (botB.isWrecked && !botA.isWrecked && !botA.ramInvincible) {
+                                        _tmpV1.subVectors(botA.mesh.position, botB.mesh.position).normalize();
+                                        wreckBotFromRam(botA, _tmpV1);
+                                        continue;
+                                    }
+
+                                    // normal push + damage when no Ram wreck occurred
+                                    _tmpV1.subVectors(botA.mesh.position, botB.mesh.position).normalize();
+                                    const pushAmount = (minDist - dist) * 0.5;
+                                    botA.mesh.position.addScaledVector(_tmpV1, pushAmount);
+                                    botB.mesh.position.addScaledVector(_tmpV1, -pushAmount);
+                                    const impact = (botA.currentSpeed + botB.currentSpeed) * 0.7;
+                                    const dmg = Math.max(1, impact * 2);
+
+                                    // NEW: damage only non‑invincible bots
+                                    if (!botA.ramInvincible) botA.health -= dmg;
+                                    if (!botB.ramInvincible) botB.health -= dmg;
+                                    // crash only handled later when health <= 0
+                                }
+                            }
+                        }
+                    } else {
+                        // Position bots during countdown
+                        for (let bot of bots) {
+                            const botPt = curve.getPointAt(bot.progress);
+                            const botTan = curve.getTangentAt(bot.progress);
+                            const botNorm = new THREE.Vector3(0, 1, 0).cross(botTan).normalize();
+                            
+                            const offsetPos = botPt.clone().addScaledVector(botNorm, bot.lateralOffset);
+                            bot.mesh.position.copy(offsetPos).y += 2;
+                            bot.mesh.rotation.y = Math.atan2(botTan.x, botTan.z) + Math.PI; // Always face track direction
+                        }
+                    }
+
+                    // NEW: Update bot health bars – follow bots, face camera, and redraw name/health
+                    for (const bot of bots) {
+                        if (bot._remove || !bot.healthBarMesh) continue;
+
+                        // Position bar above bot and face camera
+                        bot.healthBarMesh.position.copy(bot.mesh.position);
+                        bot.healthBarMesh.position.y += 5;
+                        bot.healthBarMesh.lookAt(camera.position);
+
+                        // Redraw canvas (name + health)
+                        const canvas = bot.healthBarMesh.userData.canvas;
+                        const ctx = bot.healthBarMesh.userData.ctx;
+                        if (!canvas || !ctx) continue;
+
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        // Name
+                        ctx.font = '16px Segoe UI, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(bot.name, canvas.width / 2, 0);
+
+                        // Background bar
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        ctx.fillRect(0, 10, canvas.width, 20);
+
+                        // Health fill
+                        const healthPercent = Math.max(0, bot.health) / BOT_MAX_HEALTH;
+                        const w = (canvas.width - 4) * healthPercent;
+                        const color =
+                            healthPercent > 0.5 ? '#00ff00' :
+                            healthPercent > 0.25 ? '#ffff00' :
+                            '#ff0000';
+                        ctx.fillStyle = color;
+                        ctx.fillRect(2, 12, w, 16);
+
+                        bot.healthBarMesh.material.map.needsUpdate = true;
+                    }
+
+                    // NEW: When player and all surviving bots are done, end race and show results
+                    if (playerFinished && !raceFinished) {
+                        let allBotsDone = true;
+                        for (const bot of bots) {
+                            // wait only on bots that are still alive, present, and not finished
+                            if (bot.health > 0 && !bot._remove && !bot.finished) {
+                                allBotsDone = false;
+                                break;
+                            }
+                        }
+                        if (allBotsDone) {
+                            raceFinished = true;
+                            raceTimeEl.style.display = 'none';
+                            showRaceResults(playerFinishTimeSec, bots);
+                        }
+                    }
+
+                    // --- POSITION COUNTER (PLAYER VS BOTS) ---
+                    {
+                        const playerLapForRank = lapStarted ? (lapsCompleted + 1) : 0;
+                        let ahead = 0;
+                        for (const bot of bots) {
+                            if (bot.health <= 0 || bot._remove) continue;
+                            const botLapForRank = bot.lapStarted ? (bot.lapsCompleted + 1) : 0;
+                            if (botLapForRank > playerLapForRank) ahead++;
+                            else if (botLapForRank === playerLapForRank && bot.progress > progress) ahead++;
+                        }
+                        const pos = Math.min(TOTAL_RACERS, 1 + ahead);
+                        positionDisplayEl.innerText = `${pos} / ${TOTAL_RACERS}`;
+                    }
+
+                    // --- PLAYER CRASH / MAIN RACE BRANCH ---
+                    if (isCrashed) {
+                        // --- PLAYER CRASH PHYSICS ---
+                        crashVel.y -= 0.08;
+                        bike.position.add(crashVel);
+                        crashVel.multiplyScalar(0.90);
+                        bike.rotation.x += crashRotVel.x;
+                        bike.rotation.y += crashRotVel.y;
+                        bike.rotation.z += crashRotVel.z;
+                        crashRotVel.multiplyScalar(0.92);
+
+                        // extra ragdoll when Ram‑wrecked
+                        if (playerWreckedByRam && playerRagMesh) {
+                            playerRagVel.y -= 0.08;
+                            playerRagMesh.position.add(playerRagVel);
+                            playerRagMesh.rotation.x += playerRagRotVel.x;
+                            playerRagMesh.rotation.y += playerRagRotVel.y;
+                            playerRagMesh.rotation.z += playerRagRotVel.z;
+                            playerRagVel.multiplyScalar(0.94);
+                            playerRagRotVel.multiplyScalar(0.94);
+                            const pt = curve.getPointAt(progress);
+                            const floorY = pt.y + 1.0;
+                            if (playerRagMesh.position.y < floorY + 0.5) {
+                                playerRagMesh.position.y = floorY + 0.5;
+                                playerRagVel.y *= -0.3;
+                            }
+                        }
+
+                        respawnT -= 0.016;
+                        crashOverlayEl.style.display = 'flex';
+                        crashTimerEl.innerText = "REBOOTING: " + Math.ceil(respawnT);
+                        if (respawnT <= 0) {
+                            if (playerWreckedByRam) {
+                                respawnFromRam();  // stay in same race after Ram hit
+                            } else {
+                                reset();           // normal crash resets race
+                            }
+                        }
+                    } else if (raceStarted) {
+                        const prevProgress = progress;
+
+                        // --- PLAYER THROTTLE / BRAKE / STEERING ---
+                        const boosting = keys.b && boostAmount > 0;
+                        const targetMaxS = boosting ? PLAYER_BOOST_MAX_SPEED : PLAYER_GAS_MAX_SPEED;
+
+                        if (keys.g) speed += 0.012;
+                        if (boosting) speed += 0.018;
+                        if (keys.s) speed -= 0.06;
+                        const friction = (keys.g || boosting) ? 0.998 : 0.995;
+                        speed *= friction;
+
+                        playerMaxSpeedCurrent = THREE.MathUtils.lerp(
+                            playerMaxSpeedCurrent,
+                            targetMaxS,
+                            0.08
+                        );
+                        if (speed > playerMaxSpeedCurrent) speed = playerMaxSpeedCurrent;
+                        if (speed < 0) speed = 0;
+                        // Enforce Ram burst speed for player
+                        if (ramActive && raceStarted) {
+                            if (speed < PLAYER_RAM_SPEED) speed = PLAYER_RAM_SPEED;
+                        }
+
+                        if (keys.l) steeringVel += 0.004;
+                        if (keys.r) steeringVel -= 0.004;
+                        steeringVel *= 0.85;
+
+                        angle += steeringVel * (speed + 0.5);
+
+                        // --- PLAYER WORLD MOVEMENT & COLLISIONS ---
+                        bike.position.x += Math.sin(angle) * speed;
+                        bike.position.z += Math.cos(angle) * speed;
+
+                        // --- PLAYER-TO-BOT COLLISION DETECTION AND RESPONSE ---
+                        let bikePos = bike.position.clone();
+                        const bikeCollisionRadius = 2.0;
+                        for (let i = bots.length - 1; i >= 0; i--) {
+                            const bot = bots[i];
+                            const botDist = bikePos.distanceTo(bot.mesh.position);
+                            const minBotDist = bikeCollisionRadius + bot.collisionRadius;
+                            
+                            if (botDist < minBotDist) {
+                                const now = Date.now();
+                                _tmpV1.subVectors(bikePos, bot.mesh.position).normalize();
+                                const penetration = minBotDist - botDist;
+                                const pushAmountPlayer = penetration * 0.6;
+                                const pushAmountBot = penetration * 0.7;
+
+                                bike.position.addScaledVector(_tmpV1, pushAmountPlayer);
+                                bot.mesh.position.addScaledVector(_tmpV1, -pushAmountBot);
+                                bot.lateralVelocity -= _tmpV1.x * 0.5;
+
+                                bikePos.copy(bike.position);
+
+                                // Ram interactions
+                                if (ramActive && !bot.isWrecked) {
+                                    wreckBotFromRam(bot, _tmpV1);
+                                    bot.lastBotCollisionTime = now;
+                                    continue;
+                                }
+                                // do NOT let bot Ram wreck the player while invincible
+                                if (!ramInvincible && bot.ramActive && !playerWreckedByRam && !isCrashed) {
+                                    _tmpV2.subVectors(bikePos, bot.mesh.position).normalize();
+                                    wreckPlayerFromRam(_tmpV2);
+                                    bot.lastBotCollisionTime = now;
+                                    continue;
+                                }
+                                // Hitting an already wrecked bot bike wrecks the player (unless invincible)
+                                if (!ramInvincible && bot.isWrecked && !playerWreckedByRam) {
+                                    _tmpV2.subVectors(bikePos, bot.mesh.position).normalize();
+                                    wreckPlayerFromRam(_tmpV2);
+                                    bot.lastBotCollisionTime = now;
+                                    continue;
+                                }
+
+                                // Damage / speed / crash effects with cooldown
+                                if (!ramInvincible && now - bot.lastBotCollisionTime > 250) {
+                                    bot.health -= 8;
+                                    health -= 2;
+                                    speed *= 0.95;
+                                    bot.lastBotCollisionTime = now;
+                                    if (health <= 0) {
+                                        triggerPlayerCrash(_tmpV1, speed + bot.currentSpeed);
+                                    }
+                                }
+                            }
+                            
+                            // Mark bot for crash/removal if health depleted
+                            if (bot.health <= 0 && !bot.crashed) {
+                                triggerBotCrash(
+                                    bot,
+                                    new THREE.Vector3((Math.random()-0.5), 0.2, (Math.random()-0.5)),
+                                    1.2
+                                );
+                            }
+                        }
+
+                        // --- PROGRESS TRACKING (Hill Fix) ---
+                        bikePos = bike.position.clone();
+                        let bestT = progress;
+                        let minDist = 9999;
+                        
+                        // Scan a small window around current progress to find the height
+                        for(let i=-0.05; i<=0.05; i+=0.005) {
+
+                            let testT = (progress + i + 1) % 1;
+                            let p = curve.getPointAt(testT);
+                            let d = p.distanceTo(bikePos);
+                           
+                            if(d < minDist) { minDist = d; bestT = testT; }
+                        }
+                        progress = bestT;
+                        let trackPt = curve.getPointAt(progress);
+
+                        // Lap counter: detect crossing start line at progress≈0
+                        if (!isCrashed) {
+                            const crossedStart = prevProgress > 0.9 && progress < 0.1;
+                            if (crossedStart) {
+                                const lapEl = document.getElementById('lap-display');
+                                if (!lapStarted) {
+                                    // First time ever crossing the line: start showing laps
+                                    lapStarted = true;
+                                    lapsCompleted = 0;
+                                    lapEl.style.display = 'block';
+                                    lapEl.innerText = `LAP 1/${TOTAL_LAPS}`;
+                                } else {
+                                    lapsCompleted++;
+                                    if (lapsCompleted >= TOTAL_LAPS && !playerFinished) {
+                                       // Player finished; keep race running until all bots are done
+                                       playerFinished = true;
+                                       playerFinishTimeSec = (Date.now() - raceStartTime) / 1000;
+                                       lapEl.innerText = `LAP ${TOTAL_LAPS}/${TOTAL_LAPS}`;
+                                       raceTimeEl.style.display = 'none';
+                                    } else if (lapsCompleted < TOTAL_LAPS) {
+                                       lapEl.innerText = `LAP ${Math.min(lapsCompleted + 1, TOTAL_LAPS)}/${TOTAL_LAPS}`;
+                                    }
+                                }
+                            }
+                        }
+
+                        // --- SLOPE / PITCH: tilt bike to match track slope (gentler smoothing) ---
+                        {
+                            const tan = curve.getTangentAt(progress);
+                            const horizLen = Math.hypot(tan.x, tan.z) || 1e-6;
+                            const pitch = Math.atan2(tan.y, horizLen); // positive = uphill
+                            const desiredPitch = -pitch;
+                            bike.rotation.x = THREE.MathUtils.lerp(bike.rotation.x, desiredPitch, 0.12); // smoother
+                        }
+
+                        // --- HEIGHT / ANTI-CLIP: compute desired center Y so nose clears the track and center sits on track ---
+                        {
+                            const rideHeight = 2.4;      // lower hover so player matches bot height
+                            const forwardDist = 2.4;
+                            const clearanceFront = 0.5;
+
+                            // Build quaternion that represents bike orientation (use current smoothed rotation.x and angle)
+                            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(bike.rotation.x, angle + Math.PI, bike.rotation.z));
+                            // forward in local coords (nose direction)
+                            const localForward = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
+                            // track point ahead (sample a bit forward along the curve)
+                            let bestFrontT = progress;
+                            let minFDist = 9999;
+                            for (let i = 0; i <= 0.06; i += 0.002) {
+                                let testT = (progress + i) % 1;
+                                let p = curve.getPointAt(testT);
+                                let d = p.distanceTo(bikePos);
+                                if (d < minFDist) { minFDist = d; bestFrontT = testT; }
+                            }
+                            const trackFront = curve.getPointAt(bestFrontT);
+
+                            // required center Y to keep nose above trackFront.y + clearance:
+                            // frontWorldY = centerY + forwardWorld.y * forwardDist  -> centerY >= trackFront.y + clearance - forwardWorld.y * forwardDist
+                            const needCenterFromFront = (trackFront.y + clearanceFront) - (localForward.y * forwardDist);
+                            const needCenterFromCenter = trackPt.y + rideHeight;
+                            const desiredCenterY = Math.max(needCenterFromCenter, needCenterFromFront);
+
+                            // Smoothly move center Y toward desired value to avoid teleporting
+                            bike.position.y = THREE.MathUtils.lerp(bike.position.y, desiredCenterY, 0.18);
+                        }
+
+                        // --- TRACK BOUNDARY CONSTRAINT (prevent leaving road / phasing through track) ---
+                        {
+                            const tan = curve.getTangentAt(progress);
+                            const norm = new THREE.Vector3(0, 1, 0).cross(tan).normalize();
+                            const trackCenterLine = curve.getPointAt(progress);
+
+                            // measure signed lateral offset from center along track normal
+                            const bikeToCenter = new THREE.Vector3().subVectors(curve.getPointAt(progress), bikePos);
+                            const signedLateral = bikeToCenter.dot(norm);
+                            const maxLateralDist = (roadWidth / 2) - 3;
+
+                            if (Math.abs(signedLateral) > maxLateralDist) {
+                                // Hard clamp X/Z back onto the road band so you can't phase through track edges
+                                const clamped = Math.sign(signedLateral) * maxLateralDist;
+                                const currentY = bike.position.y; // keep current vertical set by height logic
+                                bike.position.set(
+                                    trackCenterLine.x - norm.x * clamped,
+                                    currentY,
+                                    trackCenterLine.z - norm.z * clamped
+                                );
+                                // keep bikePos in sync for any later logic this frame
+                                bikePos.copy(bike.position);
+                            }
+                        }
+
+                        // --- TURN COLLISION FIX (rail touching) ---
+                        {
+                            let idx = Math.round(progress * res);
+                            const lenSeg = railLSegs.length;
+                            if (idx < 0) idx = 0;
+                            if (idx >= lenSeg) idx = lenSeg - 1;
+
+                            const railRadius = 1.0;
+                            const wheelRadius = 1.2;   // was 0.6 – wheel contact radius doubled
+                            const touchEpsilon = 0.12;
+                            const crashThreshold = railRadius + wheelRadius + touchEpsilon;
+
+                            const tan = curve.getTangentAt(progress);
+                            const norm = new THREE.Vector3(0, 1,  0).cross(tan).normalize();
+                            const bikeToCenter = new THREE.Vector3().subVectors(curve.getPointAt(progress), bikePos);
+                            
+                            const bikeQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(bike.rotation.x, angle + Math.PI, bike.rotation.z));
+                            const rightDir = new THREE.Vector3(1,0,0).applyQuaternion(bikeQuat);
+                            const wheelOffset = 1.8;  // was 0.9 – wheels further apart
+                            const wheelYOff = 2.4;    // was 1.2 – wheels lower relative to center
+
+                            const leftWheel = bikePos.clone().addScaledVector(rightDir, -wheelOffset);
+                            leftWheel.y = bike.position.y - wheelYOff;
+                            const rightWheel = bikePos.clone().addScaledVector(rightDir, wheelOffset);
+                            rightWheel.y = bike.position.y - wheelYOff;
+
+                            let minRailDist = Infinity;
+                            let closestRepel = new THREE.Vector3();
+                            const win =  6;
+                            for (let j = idx - win; j <= idx + win; j++) {
+                                const i0 = (j + lenSeg) % lenSeg;
+                               
+                                const [la, lb] = railLSegs[i0];
+                                const [ra, rb] = railRSegs[i0];
+
+                                // Test left wheel against both rails
+                                const distLL = segDistPointToSeg(leftWheel, la, lb);
+                                const distLR = segDistPointToSeg(leftWheel, ra, rb);
+                                // Test right wheel against both rails
+                                const distRL = segDistPointToSeg(rightWheel, la, lb);
+                                const distRR = segDistPointToSeg(rightWheel, ra, rb);
+
+                                // Find closest point for repulsion
+                                if (distLL < minRailDist) { minRailDist = distLL; closestRepel.copy(la).lerp(lb, 0.5); }
+                                if (distLR < minRailDist) { minRailDist = distLR; closestRepel.copy(ra).lerp(rb, 0.5); }
+                                if (distRL < minRailDist) { minRailDist = distRL; closestRepel.copy(la).lerp(lb, 0.5); }
+                                if (distRR < minRailDist) { minRailDist = distRR; closestRepel.copy(ra).lerp(rb, 0.5); }
+                            }
+
+                            // Damage health and apply collision repulsion
+                            if (minRailDist <= crashThreshold && speed > 0.2) {
+                                const now = Date.now();
+                                if (!ramInvincible && now - lastRailHitTime > 500) {
+                                    // only damage/crash if not invincible
+                                    health -= 4;
+                                    speed *= 0.7;
+                                    lastRailHitTime = now;
+                                    if (health <= 0 || speed > 1.6) {
+                                        _tmpV2.subVectors(closestRepel, bikePos);
+                                        if (_tmpV2.lengthSq() < 1e-6) {
+                                            _tmpV2.set(Math.random() - 0.5, 0, Math.random() - 0.5).normalize();
+                                        } else {
+                                            _tmpV2.normalize();
+                                        }
+                                        triggerPlayerCrash(_tmpV2, Math.max(speed, 1.2));
+                                    }
+                                }
+
+                                // still push bike away from rail, even if invincible
+                                const repelDir = norm.clone().multiplyScalar(bikeToCenter.dot(norm) > 0 ? 1 : -1);
+                                const repelAmount = (crashThreshold - minRailDist) * 0.8;
+                                bike.position.addScaledVector(repelDir, repelAmount);
+                            }
+                        }
+
+                        // --- BOOST TRAIL (NEW) ---
+                        if (keys.b && speed > 0.5) {
+                            // magenta trail when player is using normal boost (same as bots)
+                            spawnTrailAt(bike.position, 0xf0f);
+                        }
+                        // blue trail only while player Ram is active
+                        if (ramActive && speed > 0.2) {
+                            spawnTrailAt(bike.position, 0x00aaff);
+                        }
+
+                        // Bot boost trails
+                        for (const bot of bots) {
+                            if (bot._remove || bot.crashed) continue;
+                            if (bot.currentSpeed > BOT_TRAIL_THRESHOLD_SPEED) {
+                                // blue when bot Ram is active, magenta otherwise
+                                const color = bot.ramActive ? 0x00aaff : 0xf0f;
+                                spawnTrailAt(bot.mesh.position, color);
+                            }
+                        }
+
+                        bike.rotation.y = angle + Math.PI;
+                        bike.rotation.z = steeringVel * 15;
+
+                        // --- PLAYER BRAKE LIGHTS UPDATE ---
+                        if (bike.userData.brakeLights) {
+                            const brakingNow = keys.s && !isCrashed;
+                           
+                            const mat = bike.userData.brakeLights.mat;
+                            mat.color.set(brakingNow ? 0xff0000 : 0x220000);
+                        }
+                    }
+
+                    // NEW: front/back + distance culling for city/stadium decorations
+                    if ((cityCullFrameSkip++ & 1) === 0 && cityDecorations.length) {
+                        // bike forward direction in XZ plane
+                        _cityForward.set(Math.sin(angle), 0, Math.cos(angle)).normalize();
+                        for (const obj of cityDecorations) {
+                            _cityOffset.subVectors(obj.position, bike.position);
+                            const d = _cityOffset.dot(_cityForward);
+                            const distSq = _cityOffset.lengthSq();
+                            const facing = isLookingBack ? (d <= 0) : (d >= 0);
+                            obj.visible = facing && distSq <= RENDER_DISTANCE_SQ;
+                        }
+                    }
+
+                    // NEW: make bots disappear only when they’re far behind and beyond render distance
+                    if ((botCullFrameSkip++ & 1) === 0) {
+                        // bike forward direction in XZ plane
+                        _botForward.set(Math.sin(angle), 0, Math.cos(angle)).normalize();
+                        const dirSign = isLookingBack ? -1 : 1;
+                        for (const bot of bots) {
+                            if (!bot.mesh || bot._remove) continue;
+                            _botOffset.subVectors(bot.mesh.position, bike.position);
+                            const d = _botOffset.dot(_botForward) * dirSign; // >0 = in front of view
+                            const distSq = _botOffset.lengthSq();
+
+                            const inFront   = d >= 0;
+                            const farBehind = !inFront && distSq > BOT_BEHIND_HIDE_DIST_SQ;
+                            const tooFar    = distSq > RENDER_DISTANCE_SQ;
+
+                            const visible = !tooFar && !farBehind;
+
+                            bot.mesh.visible = visible;
+                            if (bot.healthBarMesh)  bot.healthBarMesh.visible  = visible;
+                            if (bot.wreckRiderMesh) bot.wreckRiderMesh.visible = visible;
+                        }
+                    }
+
+                    // --- TRAIL & EXPLOSION FADE OUT ---
+                    for (let i = trails.length - 1; i >= 0; i--) {
+                        trails[i].life -= 0.05;
+                       
+                        trails[i].m.scale.setScalar(trails[i].life);
+                        if (trails[i].life <= 0) {
+                           
+
+                            scene.remove(trails[i].m);
+                            trails.splice(i, 1);
+                        }
+                    }
+                    for (let i = explosions.length - 1; i >= 0; i--) {
+                        const e = explosions[i];
+                        e.life -= 0.04;
+                        e.v.y -= 0.03;
+                        e.m.position.add(e.v);
+                        e.v.multiplyScalar(0.93);
+                        e.m.scale.setScalar(1 + (1 - e.life) * 2);
+                        e.m.material.opacity = Math.max(0, e.life);
+                        if (e.life <= 0) {
+                            scene.remove(e.m);
+                            explosions.splice(i, 1);
+                        }
+                    }
+
+                    // --- PLAYER HEALTH BAR HUD UPDATE / CAMERA / SUN / HUD / DEV STATS / MINIMAP / RENDER ---
+                    healthBarEl.style.width = Math.max(0, (health / PLAYER_MAX_HEALTH) * 100) + '%';
+                    // Color thresholds: green >150, yellow 150–75, red <=75
+                    if (health <= 75) {
+                        healthBarEl.style.background = 'linear-gradient(90deg, #f00, #f55)';
+                    } else if (health <= 150) {
+                        healthBarEl.style.background = 'linear-gradient(90deg, #ff0, #ffa500)';
+                    } else {
+                        healthBarEl.style.background = 'linear-gradient(90deg, #0f0, #0ff)';
+                    }
+
+                    // --- CAMERA FOLLOW / SUN / HUD / DEV STATS / MINIMAP / RENDER ---
+                    const cd = 9 + speed * 2.5;
+                    const yaw = angle + camYaw;
+                    const backFactor = isLookingBack ? -1 : 1;
+                    camera.position.set(
+                        bike.position.x - Math.sin(yaw) * cd * backFactor,
+                        bike.position.y + 5.0,
+                        bike.position.z - Math.cos(yaw) * cd * backFactor
+                    );
+                    camera.lookAt(bike.position.x, bike.position.y + 0.6, bike.position.z);
+
+                    // --- RED SUN: HUGE IN SKY TO THE NORTH-WEST OF PLAYER ---
+                    {
+                        // North‑west in world space = negative X and negative Z
+                        const nwDir = new THREE.Vector3(-1, 0, -1).normalize();
+                        const redPos = bike.position.clone()
+                            .addScaledVector(nwDir, 2200)        // horizontal offset NW
+                            .add(new THREE.Vector3(0, 600, 0)); // lower in the sky, around mid‑view (was 1500)
+
+                        redSun.position.copy(redPos);
+                    }
+
+                    // --- SPEED HUD / MINIMAP / RENDER ---
+                    speedBoxEl.innerText = Math.floor(speed * HUD_KPH_FACTOR);
+                    // blue when Ram is active, magenta when boosting, otherwise black text + blue haze
+                    if (ramActive) {
+                        speedBoxEl.style.color = "#00bfff";
+                        speedBoxEl.style.textShadow = "0 0 16px #00bfff";
+                    } else if (keys.b && boostAmount > 0) {
+                        speedBoxEl.style.color = "#f0f";
+                        speedBoxEl.style.textShadow = "0 0 16px #ff00ff";
+                    } else {
+                        speedBoxEl.style.color = "#000";
+                        speedBoxEl.style.textShadow = "0 0 16px #00aaff";
+                    }
+
+                    // NEW: dev stats overlay content
+                    if (devStatsVisible && devStatsEl && !devStatsFrozen) { // CHANGED: skip updates when frozen
+                        const pos = bike.position;
+                        const kph = speed * HUD_KPH_FACTOR;
+                        const curLapIndex = lapStarted ? (lapsCompleted + 1) : 0;
+                        devStatsEl.textContent =
+                            `FPS: ${fps.toFixed(1)}\n` +
+                            `Track: ${activeTrack.name}\n` +
+                            `Lap: ${curLapIndex}/${TOTAL_LAPS}\n` +
+                            `Progress t: ${progress.toFixed(3)}\n` +
+                            `Pos: (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})\n` +
+                            `Speed: ${kph.toFixed(1)} kph\n` +
+                            `Bots alive: ${bots.filter(b => b.health > 0 && !b._remove).length}`;
+                    }
+
+                    // --- MINIMAP DRAW (throttled) ---
+                    if ((miniMapFrameSkip++ & 1) === 0) {
+                        drawMiniMap();
+                    }
+
+                    renderer.render(scene, camera);
+                    requestAnimationFrame(update);
+                }
+
+                function showRaceResults(playerTimeSec, botsArray) {
+                    const resultsContainer = document.getElementById('results-container');
+                    resultsContainer.innerHTML = '';
+
+                    const playerTimeStr = playerTimeSec.toFixed(2);
+                    document.getElementById('player-time').innerText = `YOUR TIME: ${playerTimeStr}s`;
+
+                    // Build unified racer list: 59 bots + player
+                    const racers = [];
+                    for (const bot of botsArray) {
+                        const botLapForRank = bot.lapStarted ? (bot.lapsCompleted + 1) : 0;
+                        racers.push({
+                            name: bot.name,
+                            isPlayer: false,
+                            finished: typeof bot.raceTime === 'number' // only bots that crossed TOTAL_LAPS get a time
+                            ,
+                            time: typeof bot.raceTime === 'number' ? bot.raceTime : null,
+
+
+
+                            laps: botLapForRank,
+                            progress: bot.progress || 0,
+                        });
+                    }
+                    const playerLapForRank = lapStarted ? (lapsCompleted + 1) : 0;
+                  
+                    racers.push({
+                        name: 'YOU',
+                        isPlayer: true,
+                        finished: true,
+                        time: playerTimeSec,
+                        laps: playerLapForRank,
+                        progress: progress,
+                    });
+
+                    // Sort: all finishers (have time) first, then DNFs (health 0) by distance
+                    racers.sort((a, b) => {
+                        if (a.finished && b.finished) return a.time - b.time;
+                        if (a.finished && !b.finished) return -1;
+                        if (!a.finished && b.finished) return 1;
+                        if (a.laps !== b.laps) return b.laps - a.laps;
+                        return b.progress - a.progress;
+                                       });
+
+                    let playerPlacement = 1;
+                    racers.forEach((r, idx) => {
+                        if (r.isPlayer) playerPlacement = idx + 1;
+                    });
+
+                    racers.forEach((r, idx) => {
+                        const place = idx + 1;
+                        const entry = document.createElement('div');
+                        entry.className = r.isPlayer ? 'result-entry player' : 'result-entry';
+
+                        let timeText;
+                        if (r.finished) {
+                            timeText = `${r.time.toFixed(2)}s`;
+                        } else {
+                            timeText = `DNF (Lap ${r.laps + 1})`;
+                        }
+
+                        if (r.isPlayer) {
+                            entry.innerHTML = `<strong style="color: #f0f;">${place}.</strong> <strong>YOU</strong> - ${timeText}`;
+                        } else {
+                            entry.innerHTML = `<strong>${place}.</strong> ${r.name} - ${timeText}`;
+                        }
+                        resultsContainer.appendChild(entry);
+                    });
+
+                    document.getElementById('position-display').innerText =
+                        `${playerPlacement} / ${TOTAL_RACERS}`;
+
+                    finishMenuEl.style.display = 'flex';
+                }
+
+                // CHANGED: start loop via rAF so timestamp is provided
+                requestAnimationFrame(update);
+            });
+        }
+    </script>
+</body>
+</html>
